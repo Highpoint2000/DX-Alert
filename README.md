@@ -1,5 +1,8 @@
 # DX Alert Plugin for [FM-DX-Webserver](https://github.com/NoobishSVK/fm-dx-webserver)
 
+![image](https://github.com/user-attachments/assets/09389c88-4a49-4b13-bc87-9432688af5f4)
+
+
 ## Version 1.0 (only works from web server version 1.2.3 !!!)
 
 - email Alert for DX Receiption
