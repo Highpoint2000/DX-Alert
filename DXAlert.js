@@ -3,7 +3,7 @@ var pluginConfig = {
     name: 'DX Alert',
     version: '1.0',
     author: 'Highpoint',
-    frontEndPath: 'DX-Alert/alert.js'
+    frontEndPath: 'DX-Alert/dx-alert.js'
 }
 
 // Backend (server) changes can go here...
