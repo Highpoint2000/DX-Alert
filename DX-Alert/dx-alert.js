@@ -10,7 +10,7 @@
 
 ///  This plugin only works from web server version 1.2.3!!!
 
-const EmailAddress = 'jens.burkert@icloud.com'; // Email Address for DX Alerts
+const EmailAddress = 'xxx@xxx.com'; // Email Address for DX Alerts
 const NewEmailFrequency = 5; // Repetition frequency for new alerts in minutes, minimum are 5 minutes!
 const AlertDistance = 150; // Distance for DX alarms in km, minimum is 150 kilometers!
 
