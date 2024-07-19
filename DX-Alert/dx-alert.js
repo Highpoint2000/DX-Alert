@@ -10,22 +10,22 @@
 
 ///  This plugin only works from web server version 1.2.3!!!
 
-const EmailAddress = 'xxx@xxx.com'; // Email Address for DX Alerts
+const EmailAddress = 'highpoint2000@googlemail.com'; // Email Address for DX Alerts
 const NewEmailFrequency = 5; // Repetition frequency for new alerts in minutes, minimum are 5 minutes!
 const AlertDistance = 150; // Distance for DX alarms in km, minimum is 150 kilometers!
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-const plugin_version = 'V1.0'; // Plugin Version
-let AlertSocket;
-let AlertActive = false; // Logger state
-const ServerName = document.title;
-let lastAlertTime = 0; // Timestamp of the last alert sent
-let lastAlertMessage = ""; // Stores the last alert message to avoid repetition
-
 // Immediately invoked function expression (IIFE) to encapsulate the AlertPlugin code
 (() => {
     const AlertPlugin = (() => {
+
+		const plugin_version = 'V1.0'; // Plugin Version
+		let AlertSocket;
+		let AlertActive = false; // Logger state
+		const ServerName = document.title;
+		let lastAlertTime = 0; // Timestamp of the last alert sent
+		let lastAlertMessage = ""; // Stores the last alert message to avoid repetition
 
         // Setup AlertSocket connection
         async function setupAlertSocket() {
