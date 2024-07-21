@@ -10,7 +10,7 @@
 
 ///  This plugin only works from web server version 1.2.3!!!
 
-const EmailAddress = 'xxx@xxx.xxx'; // Email Address for DX Alerts
+const EmailAddress = 'highpoint2000@googlemail.com'; // Email Address for DX Alerts
 const NewEmailFrequency = 60; // Repetition frequency for new alerts in minutes, minimum are 5 minutes!
 const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilometers!
 
@@ -181,17 +181,18 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
             clearTimeout(pressTimer);
         }
 
-        function sendTestEmail() {
-            if (!isTuneAuthenticated) {
-                console.warn("Test email press ignored: Not authenticated.");
-                alert("You must be authenticated to use the DX ALERT feature.");
-                return;
-            }
-            const testMessage = "This is a test email for DX ALERT.";
-            const testSubject = "DX ALERT Test Email";
-            sendEmail(testMessage, testSubject);
-            console.log("Test email sent.");
-        }
+		function sendTestEmail() {
+		if (!isTuneAuthenticated) {
+			console.warn("Test email press ignored: Not authenticated.");
+			alert("You must be authenticated to use the DX ALERT feature.");
+			return;
+		}
+		const testMessage = "This is a test email for DX ALERT.";
+		const testSubject = "DX ALERT Test Email";
+		sendEmail(testMessage, testSubject);
+		console.log(`Test email sent to: ${EmailAddress}`);
+		alert(`Test email sent to ${EmailAddress}.`);
+		}
 
         // Function to toggle the logger
         function toggleAlert() {
