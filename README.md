@@ -5,7 +5,7 @@
 
 ## Version 1.1 (only works from web server version 1.2.3 !!!)
 
-- Test email Integration
+- Test email integration
 
 ## Installation notes:
 
