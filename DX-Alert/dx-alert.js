@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////
 ///                                                      ///
-///  DX ALERT SCRIPT FOR FM-DX-WEBSERVER (V1.0)          ///
+///  DX ALERT SCRIPT FOR FM-DX-WEBSERVER (V1.1)          ///
 ///                                                      ///
-///  by Highpoint                last update: 19.07.24   ///
+///  by Highpoint                last update: 21.07.24   ///
 ///                                                      ///
 ///  https://github.com/Highpoint2000/DX-Alert           ///
 ///                                                      ///
@@ -10,9 +10,9 @@
 
 ///  This plugin only works from web server version 1.2.3!!!
 
-const EmailAddress = 'xxx@xxx.xxx'; // Email Address for DX Alerts
-const NewEmailFrequency = 5; // Repetition frequency for new alerts in minutes, minimum are 5 minutes!
-const AlertDistance = 150; // Distance for DX alarms in km, minimum is 150 kilometers!
+const EmailAddress = 'highpoint2000@googlemail.com'; // Email Address for DX Alerts
+const NewEmailFrequency = 60; // Repetition frequency for new alerts in minutes, minimum are 5 minutes!
+const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilometers!
 
 /////////////////////////////////////////////////////////////////////////////////////
 
@@ -20,12 +20,12 @@ const AlertDistance = 150; // Distance for DX alarms in km, minimum is 150 kilom
 (() => {
     const AlertPlugin = (() => {
 
-		const plugin_version = 'V1.0'; // Plugin Version
-		let AlertSocket;
-		let AlertActive = false; // Logger state
-		const ServerName = document.title;
-		let lastAlertTime = 0; // Timestamp of the last alert sent
-		let lastAlertMessage = ""; // Stores the last alert message to avoid repetition
+        const plugin_version = 'V1.1'; // Plugin Version
+        let AlertSocket;
+        let AlertActive = false; // Logger state
+        const ServerName = document.title;
+        let lastAlertTime = 0; // Timestamp of the last alert sent
+        let lastAlertMessage = ""; // Stores the last alert message to avoid repetition
 
         // Setup AlertSocket connection
         async function setupAlertSocket() {
@@ -127,6 +127,7 @@ const AlertDistance = 150; // Distance for DX alarms in km, minimum is 150 kilom
         }
 
         const AlertButton = document.createElement('button');
+        let pressTimer; // Variable to track the long press duration
 
         function initializeAlertButton() {
             checkAdminMode();
@@ -165,6 +166,31 @@ const AlertDistance = 150; // Distance for DX alarms in km, minimum is 150 kilom
             }, 0);
 
             AlertButton.addEventListener('click', toggleAlert);
+
+            // Add event listeners for long press
+            AlertButton.addEventListener('mousedown', startPressTimer);
+            AlertButton.addEventListener('mouseup', cancelPressTimer);
+            AlertButton.addEventListener('mouseleave', cancelPressTimer);
+        }
+
+        function startPressTimer() {
+            pressTimer = setTimeout(sendTestEmail, 2000); // 2000 ms for long press
+        }
+
+        function cancelPressTimer() {
+            clearTimeout(pressTimer);
+        }
+
+        function sendTestEmail() {
+            if (!isTuneAuthenticated) {
+                console.warn("Test email press ignored: Not authenticated.");
+                alert("You must be authenticated to use the DX ALERT feature.");
+                return;
+            }
+            const testMessage = "This is a test email for DX ALERT.";
+            const testSubject = "DX ALERT Test Email";
+            sendEmail(testMessage, testSubject);
+            console.log("Test email sent.");
         }
 
         // Function to toggle the logger
