@@ -2,7 +2,7 @@
 
 ![image](https://github.com/user-attachments/assets/09389c88-4a49-4b13-bc87-9432688af5f4)
 
-This plugin provides email Alerts for DX Receiption with the FM-DX web server:
+This plugin provides email notifications for DX reception with the FM-DX web server depending on a selected distance and frequency:
 
 ![email](https://github.com/user-attachments/assets/f5b91972-d034-47b4-b297-245a43d4b01e)
 
