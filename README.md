@@ -2,6 +2,9 @@
 
 ![image](https://github.com/user-attachments/assets/09389c88-4a49-4b13-bc87-9432688af5f4)
 
+This plugin provides email Alerts for DX Receiption with the FM-DX web server:
+
+![email](https://github.com/user-attachments/assets/f5b91972-d034-47b4-b297-245a43d4b01e)
 
 ## Version 1.1 (only works from web server version 1.2.3 !!!)
 
@@ -13,8 +16,6 @@
 2. Unpack the Logger.js and the Logger folder with the logger-plugin.js into the web server plugins folder (..fm-dx-webserver-main\plugins) 
 4. Restart the server
 5. Activate the plugin it in the settings
-
-This plugin provides email Alerts for DX Receiption with the FM-DX web server.
 
 ## Notes: 
 
