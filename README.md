@@ -1,9 +1,8 @@
 # DX Alert Plugin for [FM-DX-Webserver](https://github.com/NoobishSVK/fm-dx-webserver)
 
+This plugin provides email notifications for DX reception with the FM-DX web server depending on a selected distance and frequency.
+
 ![image](https://github.com/user-attachments/assets/1eaf2254-ab51-4724-bfdb-141be6326758)
-
-
-This plugin provides email notifications for DX reception with the FM-DX web server depending on a selected distance and frequency:
 
 ![email](https://github.com/user-attachments/assets/f5b91972-d034-47b4-b297-245a43d4b01e)
 
