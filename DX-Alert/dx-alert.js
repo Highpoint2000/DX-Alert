@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////
 ///                                                      ///
-///  DX ALERT SCRIPT FOR FM-DX-WEBSERVER (V1.1)          ///
+///  DX ALERT SCRIPT FOR FM-DX-WEBSERVER (V1.1a)          ///
 ///                                                      ///
-///  by Highpoint                last update: 21.07.24   ///
+///  by Highpoint                last update: 24.07.24   ///
 ///                                                      ///
 ///  https://github.com/Highpoint2000/DX-Alert           ///
 ///                                                      ///
@@ -10,7 +10,7 @@
 
 ///  This plugin only works from web server version 1.2.3!!!
 
-const EmailAddress = 'highpoint2000@googlemail.com'; // Email Address for DX Alerts
+const EmailAddress = ''; // Email Address for DX Alerts
 const NewEmailFrequency = 60; // Repetition frequency for new alerts in minutes, minimum are 5 minutes!
 const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilometers!
 
@@ -20,7 +20,7 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
 (() => {
     const AlertPlugin = (() => {
 
-        const plugin_version = 'V1.1'; // Plugin Version
+        const plugin_version = 'V1.1a'; // Plugin Version
         let AlertSocket;
         let AlertActive = false; // Logger state
         const ServerName = document.title;
@@ -61,6 +61,7 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
 
             try {
                 const eventData = JSON.parse(event.data);
+				//console.log(eventData);
                 const frequency = eventData.freq;
                 const picode = eventData.pi;
 
@@ -129,49 +130,51 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
         const AlertButton = document.createElement('button');
         let pressTimer; // Variable to track the long press duration
 
-        function initializeAlertButton() {
-            checkAdminMode();
-            setupAlertSocket();
-            AlertButton.classList.add('hide-phone');
-            AlertButton.id = 'DX-Alert-on-off';
-            AlertButton.setAttribute('aria-label', 'DX ALERT');
-            AlertButton.setAttribute('data-tooltip', 'DX ALERT on/off');
-            AlertButton.style.borderRadius = '0px';
-            AlertButton.style.width = '100px';
-            AlertButton.style.height = '23px';
-            AlertButton.style.position = 'relative';
-            AlertButton.style.marginTop = '16px';
-            AlertButton.style.right = '0px';
-            AlertButton.innerHTML = '<strong>DX ALERT</strong>';
-            AlertButton.classList.add('bg-color-2');
-            AlertButton.title = `Plugin Version: ${plugin_version}`; // Add title attribute for mouseover effect
+function initializeAlertButton() {
+	checkAdminMode();
+    setupAlertSocket();
+    const buttonWrapper = document.getElementById('button-wrapper');
+    AlertButton.id = 'DX-Alert-on-off';
+    AlertButton.classList.add('hide-phone', 'bg-color-2');
+    AlertButton.setAttribute('aria-label', 'DX ALERT');
+    AlertButton.setAttribute('data-tooltip', 'DX ALERT on/off');
+    AlertButton.innerHTML = '<strong>DX ALERT</strong>';
+    AlertButton.style.marginTop = '16px';
+    AlertButton.style.width = '100px';
+	AlertButton.classList.add('bg-color-2');
+	AlertButton.style.borderRadius = '0px';
+    AlertButton.title = `Plugin Version: ${plugin_version}`;
 
-            const wrapperElement = document.querySelector('.tuner-info');
-            if (wrapperElement) {
-                const buttonWrapper = document.createElement('div');
-                buttonWrapper.classList.add('button-wrapper');
-                buttonWrapper.appendChild(AlertButton);
-                wrapperElement.appendChild(buttonWrapper);
-            }
+    if (buttonWrapper) {
+		AlertButton.style.marginLeft = '5px';
+        buttonWrapper.appendChild(AlertButton);
+        console.log('Alarm button successfully added to button-wrapper.');
+    } else {
+        console.error('buttonWrapper Element not found. Adding button to standard location.');
 
-            setTimeout(() => {
-                const loggerButton = document.getElementById('Log-on-off');
-                if (!loggerButton) {
-                    // Add a blank line if the logger button is not present
-                    const emptyLine = document.createElement('br');
-                    if (wrapperElement) {
-                        wrapperElement.appendChild(emptyLine);
-                    }
-                }
-            }, 0);
-
-            AlertButton.addEventListener('click', toggleAlert);
-
-            // Add event listeners for long press
-            AlertButton.addEventListener('mousedown', startPressTimer);
-            AlertButton.addEventListener('mouseup', cancelPressTimer);
-            AlertButton.addEventListener('mouseleave', cancelPressTimer);
+        const wrapperElement = document.querySelector('.tuner-info');
+        if (wrapperElement) {
+            const standardWrapper = document.createElement('div');
+            standardWrapper.classList.add('button-wrapper');
+            standardWrapper.appendChild(AlertButton);
+            wrapperElement.appendChild(standardWrapper);
+			const emptyLine = document.createElement('br');
+			wrapperElement.appendChild(emptyLine);
+            console.log('Alarm button successfully added to standard location.');
+        } else {
+            console.error('standard location not found. Unable to add button.');
         }
+    }
+
+    AlertButton.addEventListener('click', toggleAlert);
+    AlertButton.addEventListener('mousedown', startPressTimer);
+    AlertButton.addEventListener('mouseup', cancelPressTimer);
+    AlertButton.addEventListener('mouseleave', cancelPressTimer);
+
+    checkAdminMode();
+    setupAlertSocket();
+}
+
 
         function startPressTimer() {
             pressTimer = setTimeout(sendTestEmail, 2000); // 2000 ms for long press
@@ -194,45 +197,51 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
 		alert(`Test email sent to ${EmailAddress}.`);
 		}
 
-        // Function to toggle the logger
-        function toggleAlert() {
-            if (!isTuneAuthenticated) {
-                console.warn("DX ALERT button press ignored: Not authenticated.");
-                alert("You must be authenticated to use the DX ALERT feature.");
-                return;
-            }
-            AlertActive = !AlertActive; // Toggle status
-            lastAlertTime = 0; // Reset the last alert time
-            lastAlertMessage = ""; // Reset the last alert message
-            if (AlertActive) {
-                AlertButton.classList.remove('bg-color-2');
-                AlertButton.classList.add('bg-color-4');
-                console.log("DX ALERT activated");
-            } else {
-                AlertButton.classList.remove('bg-color-4');
-                AlertButton.classList.add('bg-color-2');
-                console.log("DX ALERT deactivated");
-            }
-        }
+function toggleAlert() {
+    if (!isTuneAuthenticated) {
+        console.warn("DX ALERT button press ignored: Not authenticated.");
+        alert("You must be authenticated to use the DX ALERT feature.");
+        return;
+    }
+    AlertActive = !AlertActive; // Toggle status
+    lastAlertTime = 0; // Reset the last alert time
+    lastAlertMessage = ""; // Reset the last alert message
+
+    if (AlertActive) {
+        AlertButton.classList.remove('bg-color-2');
+        AlertButton.classList.add('bg-color-4');
+        console.log("DX ALERT activated");
+    } else {
+        AlertButton.classList.remove('bg-color-4');
+        AlertButton.classList.add('bg-color-2');
+        console.log("DX ALERT deactivated");
+    }
+}
+
 
         var isTuneAuthenticated = false; // Set global variable initially to false
 
-        function checkAdminMode() {
-            var bodyText = document.body.textContent || document.body.innerText;
-            var isAdminLoggedIn = bodyText.includes("You are logged in as an administrator.") || bodyText.includes("You are logged in as an adminstrator.");
-            var canControlReceiver = bodyText.includes("You are logged in and can control the receiver.");
+function checkAdminMode() {
+    var bodyText = document.body.textContent || document.body.innerText;
+    var isAdminLoggedIn = bodyText.includes("You are logged in as an administrator.") || bodyText.includes("You are logged in as an adminstrator.");
+    var canControlReceiver = bodyText.includes("You are logged in and can control the receiver.");
 
-            if (isAdminLoggedIn || canControlReceiver) {
-                console.log("Admin or Tune mode found. DX ALERT Authentication successful.");
-                isTuneAuthenticated = true;
-            } else {
-                console.log("No special authentication message found. Authentication failed.");
-                isTuneAuthenticated = false;
-            }
-        }
+    if (isAdminLoggedIn || canControlReceiver) {
+        console.log("Admin or Tune mode found. DX ALERT Authentication successful.");
+        isTuneAuthenticated = true;
+    } else {
+        console.log("No special authentication message found. Authentication failed.");
+        isTuneAuthenticated = false;
+    }
+}
 
-        // Ensure this script runs after the window loads
-        window.addEventListener('load', initializeAlertButton);
+		
+// Warte auf das Laden des DOMs und führe dann die Funktion nach einer kurzen Verzögerung aus
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(initializeAlertButton, 400); // Verzögert die Ausführung um 1 Sekunde
+});
+
+        
 
         document.addEventListener('DOMContentLoaded', function() {
             checkAdminMode();
