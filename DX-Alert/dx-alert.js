@@ -145,7 +145,7 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
             setupAlertSocket();
             
             AlertButton.id = 'DX-Alert-on-off';
-            AlertButton.classList.add('hide-phone', 'bg-color-2');
+            AlertButton.classList.add('hide-phone');
             AlertButton.setAttribute('aria-label', 'DX ALERT');
             AlertButton.setAttribute('data-tooltip', 'DX ALERT on/off');
             AlertButton.innerHTML = '<strong>DX ALERT</strong>';
@@ -169,9 +169,8 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
 					buttonWrapper.id = 'button-wrapper'; 
 					buttonWrapper.appendChild(AlertButton);
 					wrapperElement.appendChild(buttonWrapper);
-
-				const emptyLine = document.createElement('br');
-				wrapperElement.appendChild(emptyLine);
+					const emptyLine = document.createElement('br');
+					wrapperElement.appendChild(emptyLine);
                 } else {
                     console.error('standard location not found. Unable to add button.');
                 }
