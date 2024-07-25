@@ -21,6 +21,10 @@ This plugin provides email notifications for DX reception with the FM-DX web ser
 
 To use the plugin, you must enter a valid email address in the script header. You also have the option of entering a notification interval in minutes (minimum is 5 minutes) as well as a distance in km (minimum is 150 km) from when the plugin should notify you. The plugin can only be activated as an authenticated user or as an admin. After logging in, you can send a test email to the registered address by pressing and holding the DX-Alert button. Since this is a purely client-related application, the browser must not be closed during the indication! The plugin is a useful addition to the [scanner plugin](https://github.com/Highpoint2000/webserver-scanner) so that you are always informed if the reception conditions change positively!
 
+Users who also use the Extended Description plugin should download the modified version from here, where the buttons are displayed in one line: https://github.com/Highpoint2000/Extended-Description-plugin-MOD-by-Highpoint-
+
+![image](https://github.com/user-attachments/assets/18a0eae5-af68-4b81-875a-07e385517c79)
+
 Please note:
 
 - The plugin does not log receptions. Only the first station found, above the entered kilometer limit and time interval, will be sent with detailed information as an indication of overreach!
