@@ -2,7 +2,7 @@
 ///                                                      ///
 ///  DX ALERT SCRIPT FOR FM-DX-WEBSERVER (V1.1a)          ///
 ///                                                      ///
-///  by Highpoint                last update: 24.07.24   ///
+///  by Highpoint                last update: 25.07.24   ///
 ///                                                      ///
 ///  https://github.com/Highpoint2000/DX-Alert           ///
 ///                                                      ///
@@ -11,7 +11,7 @@
 ///  This plugin only works from web server version 1.2.3!!!
 
 const EmailAddress = ''; // Email Address for DX Alerts
-const NewEmailFrequency = 60; // Repetition frequency for new alerts in minutes, minimum are 5 minutes!
+const NewEmailFrequency = 60; // Repetition frequency for new alerts in minutes, minimum is 5 minutes!
 const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilometers!
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -61,7 +61,7 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
 
             try {
                 const eventData = JSON.parse(event.data);
-				//console.log(eventData);
+                //console.log(eventData);
                 const frequency = eventData.freq;
                 const picode = eventData.pi;
 
@@ -127,54 +127,55 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
             });
         }
 
-        const AlertButton = document.createElement('button');
         let pressTimer; // Variable to track the long press duration
 
-function initializeAlertButton() {
-	checkAdminMode();
-    setupAlertSocket();
-    const buttonWrapper = document.getElementById('button-wrapper');
-    AlertButton.id = 'DX-Alert-on-off';
-    AlertButton.classList.add('hide-phone', 'bg-color-2');
-    AlertButton.setAttribute('aria-label', 'DX ALERT');
-    AlertButton.setAttribute('data-tooltip', 'DX ALERT on/off');
-    AlertButton.innerHTML = '<strong>DX ALERT</strong>';
-    AlertButton.style.marginTop = '16px';
-    AlertButton.style.width = '100px';
-	AlertButton.classList.add('bg-color-2');
-	AlertButton.style.borderRadius = '0px';
-    AlertButton.title = `Plugin Version: ${plugin_version}`;
+        function initializeAlertButton() {
+            const buttonWrapper = document.getElementById('button-wrapper');
+            const AlertButton = document.createElement('button');
+            
+            checkAdminMode();
+            setupAlertSocket();
+            
+            AlertButton.id = 'DX-Alert-on-off';
+            AlertButton.classList.add('hide-phone', 'bg-color-2');
+            AlertButton.setAttribute('aria-label', 'DX ALERT');
+            AlertButton.setAttribute('data-tooltip', 'DX ALERT on/off');
+            AlertButton.innerHTML = '<strong>DX ALERT</strong>';
+            AlertButton.style.marginTop = '16px';
+            AlertButton.style.width = '100px';
+            AlertButton.classList.add('bg-color-2');
+            AlertButton.style.borderRadius = '0px';
+            AlertButton.title = `Plugin Version: ${plugin_version}`;
 
-    if (buttonWrapper) {
-		AlertButton.style.marginLeft = '5px';
-        buttonWrapper.appendChild(AlertButton);
-        console.log('Alarm button successfully added to button-wrapper.');
-    } else {
-        console.error('buttonWrapper Element not found. Adding button to standard location.');
+            if (buttonWrapper) {
+                AlertButton.style.marginLeft = '5px';
+                buttonWrapper.appendChild(AlertButton);
+                console.log('Alert button successfully added to button-wrapper.');
+            } else {
+                console.error('buttonWrapper Element not found. Adding button to standard location.');
 
-        const wrapperElement = document.querySelector('.tuner-info');
-        if (wrapperElement) {
-            const standardWrapper = document.createElement('div');
-            standardWrapper.classList.add('button-wrapper');
-            standardWrapper.appendChild(AlertButton);
-            wrapperElement.appendChild(standardWrapper);
-			const emptyLine = document.createElement('br');
-			wrapperElement.appendChild(emptyLine);
-            console.log('Alarm button successfully added to standard location.');
-        } else {
-            console.error('standard location not found. Unable to add button.');
+                const wrapperElement = document.querySelector('.tuner-info');
+                if (wrapperElement) {
+                    const standardWrapper = document.createElement('div');
+                    standardWrapper.classList.add('button-wrapper');
+                    standardWrapper.appendChild(AlertButton);
+                    wrapperElement.appendChild(standardWrapper);
+                    const emptyLine = document.createElement('br');
+                    wrapperElement.appendChild(emptyLine);
+                    console.log('Alert button successfully added to standard location.');
+                } else {
+                    console.error('standard location not found. Unable to add button.');
+                }
+            }
+
+            AlertButton.addEventListener('click', toggleAlert);
+            AlertButton.addEventListener('mousedown', startPressTimer);
+            AlertButton.addEventListener('mouseup', cancelPressTimer);
+            AlertButton.addEventListener('mouseleave', cancelPressTimer);
+
+            checkAdminMode();
+            setupAlertSocket();
         }
-    }
-
-    AlertButton.addEventListener('click', toggleAlert);
-    AlertButton.addEventListener('mousedown', startPressTimer);
-    AlertButton.addEventListener('mouseup', cancelPressTimer);
-    AlertButton.addEventListener('mouseleave', cancelPressTimer);
-
-    checkAdminMode();
-    setupAlertSocket();
-}
-
 
         function startPressTimer() {
             pressTimer = setTimeout(sendTestEmail, 2000); // 2000 ms for long press
@@ -184,64 +185,60 @@ function initializeAlertButton() {
             clearTimeout(pressTimer);
         }
 
-		function sendTestEmail() {
-		if (!isTuneAuthenticated) {
-			console.warn("Test email press ignored: Not authenticated.");
-			alert("You must be authenticated to use the DX ALERT feature.");
-			return;
-		}
-		const testMessage = "This is a test email for DX ALERT.";
-		const testSubject = "DX ALERT Test Email";
-		sendEmail(testMessage, testSubject);
-		console.log(`Test email sent to: ${EmailAddress}`);
-		alert(`Test email sent to ${EmailAddress}.`);
-		}
+        function sendTestEmail() {
+            if (!isTuneAuthenticated) {
+                console.warn("Test email press ignored: Not authenticated.");
+                alert("You must be authenticated to use the DX ALERT feature.");
+                return;
+            }
+            const testMessage = "This is a test email for DX ALERT.";
+            const testSubject = "DX ALERT Test Email";
+            sendEmail(testMessage, testSubject);
+            console.log(`Test email sent to: ${EmailAddress}`);
+            alert(`Test email sent to ${EmailAddress}.`);
+        }
 
-function toggleAlert() {
-    if (!isTuneAuthenticated) {
-        console.warn("DX ALERT button press ignored: Not authenticated.");
-        alert("You must be authenticated to use the DX ALERT feature.");
-        return;
-    }
-    AlertActive = !AlertActive; // Toggle status
-    lastAlertTime = 0; // Reset the last alert time
-    lastAlertMessage = ""; // Reset the last alert message
+        function toggleAlert() {
+            if (!isTuneAuthenticated) {
+                console.warn("DX ALERT button press ignored: Not authenticated.");
+                alert("You must be authenticated to use the DX ALERT feature.");
+                return;
+            }
+            AlertActive = !AlertActive; // Toggle status
+            lastAlertTime = 0; // Reset the last alert time
+            lastAlertMessage = ""; // Reset the last alert message
 
-    if (AlertActive) {
-        AlertButton.classList.remove('bg-color-2');
-        AlertButton.classList.add('bg-color-4');
-        console.log("DX ALERT activated");
-    } else {
-        AlertButton.classList.remove('bg-color-4');
-        AlertButton.classList.add('bg-color-2');
-        console.log("DX ALERT deactivated");
-    }
-}
-
+            if (AlertActive) {
+                AlertButton.classList.remove('bg-color-2');
+                AlertButton.classList.add('bg-color-4');
+                console.log("DX ALERT activated");
+            } else {
+                AlertButton.classList.remove('bg-color-4');
+                AlertButton.classList.add('bg-color-2');
+                console.log("DX ALERT deactivated");
+            }
+        }
 
         var isTuneAuthenticated = false; // Set global variable initially to false
 
-function checkAdminMode() {
-    var bodyText = document.body.textContent || document.body.innerText;
-    var isAdminLoggedIn = bodyText.includes("You are logged in as an administrator.") || bodyText.includes("You are logged in as an adminstrator.");
-    var canControlReceiver = bodyText.includes("You are logged in and can control the receiver.");
+        function checkAdminMode() {
+            var bodyText = document.body.textContent || document.body.innerText;
+            var isAdminLoggedIn = bodyText.includes("You are logged in as an administrator.") || bodyText.includes("You are logged in as an adminstrator.");
+            var canControlReceiver = bodyText.includes("You are logged in and can control the receiver.");
 
-    if (isAdminLoggedIn || canControlReceiver) {
-        console.log("Admin or Tune mode found. DX ALERT Authentication successful.");
-        isTuneAuthenticated = true;
-    } else {
-        console.log("No special authentication message found. Authentication failed.");
-        isTuneAuthenticated = false;
-    }
-}
+            if (isAdminLoggedIn || canControlReceiver) {
+                console.log("Admin or Tune mode found. DX ALERT Authentication successful.");
+                isTuneAuthenticated = true;
+            } else {
+                console.log("No special authentication message found. Authentication failed.");
+                isTuneAuthenticated = false;
+            }
+        }
 
-		
-// Warte auf das Laden des DOMs und führe dann die Funktion nach einer kurzen Verzögerung aus
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(initializeAlertButton, 400); // Verzögert die Ausführung um 1 Sekunde
-});
-
-        
+        // Wait for the DOM to load and then execute the function after a short delay
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(initializeAlertButton, 500); // Delays execution by 0.5 seconds
+        });
 
         document.addEventListener('DOMContentLoaded', function() {
             checkAdminMode();
