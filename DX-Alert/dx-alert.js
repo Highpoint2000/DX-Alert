@@ -16,24 +16,22 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-// Immediately invoked function expression (IIFE) to encapsulate the AlertPlugin code
 (() => {
     const AlertPlugin = (() => {
-
         const plugin_version = 'V1.1a'; // Plugin Version
         let AlertSocket;
         let AlertActive = false; // Logger state
         const ServerName = document.title;
         let lastAlertTime = 0; // Timestamp of the last alert sent
         let lastAlertMessage = ""; // Stores the last alert message to avoid repetition
-		
-		// CSS Styles for buttonWrapper
-		const buttonWrapperStyles = `
-			display: flex;
-			justify-content: left;
-			align-items: center;
-			margin-top: 0px;
-		`; 
+
+        // CSS Styles for buttonWrapper
+        const buttonWrapperStyles = `
+            display: flex;
+            justify-content: left;
+            align-items: center;
+            margin-top: 0px;
+        `;
 
         // Setup AlertSocket connection
         async function setupAlertSocket() {
@@ -136,9 +134,15 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
         }
 
         let pressTimer; // Variable to track the long press duration
-		const AlertButton = document.createElement('button');
+        const AlertButton = document.createElement('button');
 
         function initializeAlertButton() {
+            // Check if EmailAddress contains '@' before proceeding
+            if (!EmailAddress.includes('@')) {
+                console.warn("Invalid EmailAddress format. DX ALERT button not displayed.");
+                return;
+            }
+
             const buttonWrapper = document.getElementById('button-wrapper');
             
             checkAdminMode();
@@ -165,12 +169,12 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
 
                 if (wrapperElement) {
                     const buttonWrapper = document.createElement('div');
-					buttonWrapper.classList.add('button-wrapper');
-					buttonWrapper.id = 'button-wrapper'; 
-					buttonWrapper.appendChild(AlertButton);
-					wrapperElement.appendChild(buttonWrapper);
-					const emptyLine = document.createElement('br');
-					wrapperElement.appendChild(emptyLine);
+                    buttonWrapper.classList.add('button-wrapper');
+                    buttonWrapper.id = 'button-wrapper'; 
+                    buttonWrapper.appendChild(AlertButton);
+                    wrapperElement.appendChild(buttonWrapper);
+                    const emptyLine = document.createElement('br');
+                    wrapperElement.appendChild(emptyLine);
                 } else {
                     console.error('standard location not found. Unable to add button.');
                 }
@@ -245,7 +249,7 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
 
         // Wait for the DOM to load and then execute the function after a short delay
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(initializeAlertButton, 1000); // Delays execution by 1 seconds
+            setTimeout(initializeAlertButton, 1000); // Delays execution by 1 second
         });
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -254,3 +258,4 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
 
     })();
 })();
+
