@@ -6,9 +6,9 @@ This plugin provides email notifications for DX reception with the FM-DX web ser
 
 ![email](https://github.com/user-attachments/assets/f5b91972-d034-47b4-b297-245a43d4b01e)
 
-## Version 1.1a (only works from web server version 1.2.3 !!!)
+## Version 1.1b (only works from web server version 1.2.3 !!!)
 
-- DX-ALERT Button Position Update (several buttons in one line)
+- Use of the email address stored in the web server
 
 ## Installation notes:
 
@@ -32,6 +32,10 @@ Please note:
 - If you activate the alert button, you will also receive an email if another user of the web server receives DX stations while zapping
 
 ## History: 
+
+## Version 1.1a (only works from web server version 1.2.3 !!!)
+
+- DX-ALERT Button Position Update (several buttons in one line)
 
 ### Version 1.1 (only works from web server version 1.2.3 !!!)
 
