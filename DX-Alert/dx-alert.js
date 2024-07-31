@@ -18,7 +18,7 @@ const AlertDistance = 200; // Distance for DX alarms in km, minimum is 150 kilom
 
 (() => {
     const AlertPlugin = (() => {
-        const plugin_version = 'V1.1b'; // Plugin Version
+        const plugin_version = 'V1.1a'; // Plugin Version
         let AlertSocket;
         let AlertActive = false; // Logger state
         const ServerName = document.title;
@@ -206,6 +206,20 @@ const AlertDistance = 200; // Distance for DX alarms in km, minimum is 150 kilom
                 }
             }
 
+            // Load the toggle status from localStorage
+            const savedStatus = localStorage.getItem('alertActive');
+            if (savedStatus === 'true') {
+                AlertActive = true;
+                AlertButton.classList.remove('bg-color-2');
+                AlertButton.classList.add('bg-color-4');
+                console.log("DX ALERT activated from saved state.");
+            } else {
+                AlertActive = false;
+                AlertButton.classList.remove('bg-color-4');
+                AlertButton.classList.add('bg-color-2');
+                console.log("DX ALERT deactivated from saved state.");
+            }
+
             AlertButton.addEventListener('click', toggleAlert);
             AlertButton.addEventListener('mousedown', startPressTimer);
             AlertButton.addEventListener('mouseup', cancelPressTimer);
@@ -255,6 +269,9 @@ const AlertDistance = 200; // Distance for DX alarms in km, minimum is 150 kilom
                 AlertButton.classList.add('bg-color-2');
                 console.log("DX ALERT deactivated");
             }
+
+            // Save the toggle status to localStorage
+            localStorage.setItem('alertActive', AlertActive);
         }
 
         var isTuneAuthenticated = false; // Set global variable initially to false
