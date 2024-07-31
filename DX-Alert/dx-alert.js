@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////
 ///                                                      ///
-///  DX ALERT SCRIPT FOR FM-DX-WEBSERVER (V1.1a)          ///
+///  DX ALERT SCRIPT FOR FM-DX-WEBSERVER (V1.1b)          ///
 ///                                                      ///
-///  by Highpoint                last update: 25.07.24   ///
+///  by Highpoint                last update: 31.07.24   ///
 ///                                                      ///
 ///  https://github.com/Highpoint2000/DX-Alert           ///
 ///                                                      ///
@@ -10,15 +10,15 @@
 
 ///  This plugin only works from web server version 1.2.3!!!
 
-const EmailAddress = ''; // Email Address for DX Alerts
+const EmailAddress = ''; // Alternative email address for DX alerts
 const NewEmailFrequency = 60; // Repetition frequency for new alerts in minutes, minimum is 5 minutes!
-const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilometers!
+const AlertDistance = 200; // Distance for DX alarms in km, minimum is 150 kilometers!
 
 /////////////////////////////////////////////////////////////////////////////////////
 
 (() => {
     const AlertPlugin = (() => {
-        const plugin_version = 'V1.1a'; // Plugin Version
+        const plugin_version = 'V1.1b'; // Plugin Version
         let AlertSocket;
         let AlertActive = false; // Logger state
         const ServerName = document.title;
@@ -32,6 +32,32 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
             align-items: center;
             margin-top: 0px;
         `;
+
+        // Validate the email address
+        function validateEmail(email) {
+            // Simple email validation rule
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        // Function to determine the valid email address
+        function getValidEmail() {
+            if (validateEmail(EmailAddress)) {
+                return EmailAddress; // Return the valid email address
+            } else {
+                // Attempt to extract the email address from the <span>
+                const emailElement = document.querySelector('.text-small.m-0.bottom-20');
+                if (emailElement) {
+                    const emailAddressWebserver = emailElement.textContent.trim();
+                    return emailAddressWebserver; // Return the valid email address
+                } else {                
+                    console.warn('No valid email address found!');
+                }
+            }
+        }
+
+        // Ensure the correct email address is used
+        const ValidEmailAddress = getValidEmail();
 
         // Setup AlertSocket connection
         async function setupAlertSocket() {
@@ -106,7 +132,7 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
                 user_id: '8UurLFsfxfeCVmTjB',
                 template_params: {
                     'from_name': ServerName,
-                    'to_email': EmailAddress,
+                    'to_email': ValidEmailAddress, // Use the determined or default email address
                     'subject': subject,
                     'message': message,
                 }
@@ -137,8 +163,8 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
         const AlertButton = document.createElement('button');
 
         function initializeAlertButton() {
-            // Check if EmailAddress contains '@' before proceeding
-            if (!EmailAddress.includes('@')) {
+            // Check if ValidEmailAddress contains '@' before proceeding
+            if (!ValidEmailAddress.includes('@')) {
                 console.warn("Invalid EmailAddress format. DX ALERT button not displayed.");
                 return;
             }
@@ -206,8 +232,8 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
             const testMessage = "This is a test email for DX ALERT.";
             const testSubject = "DX ALERT Test Email";
             sendEmail(testMessage, testSubject);
-            console.log(`Test email sent to: ${EmailAddress}`);
-            alert(`Test email sent to ${EmailAddress}.`);
+            console.log(`Test email sent to: ${ValidEmailAddress}`);
+            alert(`Test email sent to ${ValidEmailAddress}.`);
         }
 
         function toggleAlert() {
@@ -237,13 +263,14 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
             var bodyText = document.body.textContent || document.body.innerText;
             var isAdminLoggedIn = bodyText.includes("You are logged in as an administrator.") || bodyText.includes("You are logged in as an adminstrator.");
             var canControlReceiver = bodyText.includes("You are logged in and can control the receiver.");
-
-            if (isAdminLoggedIn || canControlReceiver) {
-                console.log("Admin or Tune mode found. DX ALERT Authentication successful.");
-                isTuneAuthenticated = true;
-            } else {
-                console.log("No special authentication message found. Authentication failed.");
-                isTuneAuthenticated = false;
+            if (ValidEmailAddress) {
+                if (isAdminLoggedIn || canControlReceiver) {
+                    console.log(`Admin or Tune mode and email address: ${ValidEmailAddress} found. DX ALERT Authentication successful.`);
+                    isTuneAuthenticated = true;
+                } else {
+                    console.log("No authentication or valid email found. Authentication failed.");
+                    isTuneAuthenticated = false;
+                }
             }
         }
 
@@ -258,4 +285,3 @@ const AlertDistance = 180; // Distance for DX alarms in km, minimum is 150 kilom
 
     })();
 })();
-
