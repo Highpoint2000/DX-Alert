@@ -9,6 +9,7 @@ This plugin provides email notifications for DX reception with the FM-DX web ser
 ## Version 1.1b (only works from web server version 1.2.3 !!!)
 
 - Use of the email address stored in the web server
+- Browser-based last state restore
 
 ## Installation notes:
 
