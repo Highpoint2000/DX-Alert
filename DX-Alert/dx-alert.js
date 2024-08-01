@@ -18,7 +18,7 @@ const AlertDistance = 200; // Distance for DX alarms in km, minimum is 150 kilom
 
 (() => {
     const AlertPlugin = (() => {
-        const plugin_version = 'V1.1a'; // Plugin Version
+        const plugin_version = 'V1.1b'; // Plugin Version
         let AlertSocket;
         let AlertActive = false; // Logger state
         const ServerName = document.title;
