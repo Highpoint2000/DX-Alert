@@ -99,10 +99,10 @@ const AlertDistance = 200; // Distance for DX alarms in km, minimum is 150 kilom
 
                 // Process data if frequency is not in the blacklist
                 const txInfo = eventData.txInfo;
-                const station = txInfo ? txInfo.station : "";
+                const station = txInfo ? txInfo.tx : "";
                 const city = txInfo ? txInfo.city : "";
                 const itu = txInfo ? txInfo.itu : "";
-                const distance = txInfo ? txInfo.distance : "";
+                const distance = txInfo ? txInfo.dist : "";
 
                 // Check if the distance exceeds the AlertDistance and log to the console
                 if (AlertActive && distance > AlertDistance && AlertDistance > '149') {
