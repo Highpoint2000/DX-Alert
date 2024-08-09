@@ -314,7 +314,7 @@
     // Handle click on the alert button (currently no status change)
     async function handleAlertButtonClick() {
         if (!isTuneAuthenticated) {
-            showCustomAlert("You must be authenticated to use the DX ALERT feature.");
+            showCustomAlert("You must be authenticated as admin to use the DX ALERT feature.");
             return;
         }
         // No status change on click; handled by press timer
@@ -323,7 +323,7 @@
     // Toggle alert status and update WebSocket
     async function toggleAlert() {
         if (!isTuneAuthenticated) {
-            showCustomAlert("You must be authenticated to use the DX ALERT feature.");
+            showCustomAlert("You must be authenticated as admin to use the DX ALERT feature.");
             return;
         }
 
@@ -358,7 +358,7 @@
 
     function checkAdminMode() {
         const bodyText = document.body.textContent || document.body.innerText;
-        isTuneAuthenticated = bodyText.includes("You are logged in as an adminstrator.") || bodyText.includes("You are logged in and can control the receiver.");
+        isTuneAuthenticated = bodyText.includes("You are logged in as an administrator.") || bodyText.includes("You are logged in as an adminstrator.");
         console.log(isTuneAuthenticated ? `DX ALERT Authentication successful.` : "Authentication failed.");
     }
 })();
