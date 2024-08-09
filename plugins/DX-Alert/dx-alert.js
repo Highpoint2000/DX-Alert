@@ -68,7 +68,7 @@
 
         try {
             const eventData = JSON.parse(event.data);
-            console.log(eventData); 
+            // console.log(eventData); 
             if (eventData.type === 'DX-Alert' && eventData.source !== ipAddress) {
                 const { status, email, freq, dist, subject, message } = eventData.value;
 
