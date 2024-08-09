@@ -45,7 +45,7 @@
     async function setupSendSocket() {
         if (!wsSendSocket || wsSendSocket.readyState === WebSocket.CLOSED) {
             try {
-                wsSendSocket = new WebSocket(WEBSOCKET_URL); // WebSocket URL with /extra
+                wsSendSocket = new WebSocket(WEBSOCKET_URL);
                 wsSendSocket.addEventListener("open", () => {
                     console.log("Send WebSocket connected.");
                     sendInitialWebSocketMessage();
