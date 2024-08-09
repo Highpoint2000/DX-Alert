@@ -30,12 +30,22 @@
         align-items: center;
         margin-top: 0px;
     `;
+	
+	// Extract WebserverURL and WebserverPORT from the current page URL
+    const currentURL = new URL(window.location.href);
+    const WebserverURL = currentURL.hostname;
+    let WebserverPORT = currentURL.port || (currentURL.protocol === 'https:' ? '443' : '80'); // Default ports if not specified
+
+    // Determine WebSocket protocol and port
+    const protocol = currentURL.protocol === 'https:' ? 'wss:' : 'ws:'; // Determine WebSocket protocol
+    const WebsocketPORT = WebserverPORT; // Use the same port as HTTP/HTTPS
+	const WEBSOCKET_URL = `${protocol}//${WebserverURL}:${WebsocketPORT}/extra`; // WebSocket URL with /extra
 
     // Function to set up WebSocket connection for sending messages
     async function setupSendSocket() {
         if (!wsSendSocket || wsSendSocket.readyState === WebSocket.CLOSED) {
             try {
-                wsSendSocket = new WebSocket('ws://highpoint2000.selfhost.de:9080/extra');
+                wsSendSocket = new WebSocket(WEBSOCKET_URL); // WebSocket URL with /extra
                 wsSendSocket.addEventListener("open", () => {
                     console.log("Send WebSocket connected.");
                     sendInitialWebSocketMessage();
