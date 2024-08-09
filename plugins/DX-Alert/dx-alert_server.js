@@ -2,7 +2,7 @@
 ///                                                          ///
 ///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V2.0)       ///
 ///                                                          ///
-///  by Highpoint                last update: 08.08.24       ///
+///  by Highpoint                last update: 09.08.24       ///
 ///                                                          ///
 ///  https://github.com/Highpoint2000/DX-Alert               ///
 ///                                                          ///
