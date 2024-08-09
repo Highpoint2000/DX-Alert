@@ -12,8 +12,8 @@
 
 // Configuration Variables
 const EmailAddress = ''; // Alternative email address for DX alerts
-const NewEmailFrequency = 5; // Frequency for new alerts in minutes, minimum 5 minutes
-const AlertDistance = 150; // Distance for DX alarms in km, minimum 150 km
+const NewEmailFrequency = 60; // Frequency for new alerts in minutes, minimum 5 minutes
+const AlertDistance = 200; // Distance for DX alarms in km, minimum 150 km
 const Autostart = 'on'; // Start the alert on server startup ('on' or 'off')
 
 ////////////////////////////////////////////////////////////////
