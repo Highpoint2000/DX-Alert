@@ -7,11 +7,10 @@ This plugin provides email notifications for DX reception with the FM-DX web ser
 
 ![email](https://github.com/user-attachments/assets/f5b91972-d034-47b4-b297-245a43d4b01e)
 
-## Version 2.0 (only works from web server version 1.2.6 !!!)
+## Version 2.0 SERVER BASED VERSION (only works from web server version 1.2.6 !!!)
 
 - Server based module for background alerts (browser no more required!)
 - Status Notifications in the browser in a new design
-- Activities are recorded in the server log (\plugins\DX-Alert)
 
 ## Installation notes:
 
