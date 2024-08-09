@@ -12,8 +12,8 @@
 
 // Configuration Variables
 const EmailAddress = ''; // Alternative email address for DX alerts
-const NewEmailFrequency = 60; // Frequency for new alerts in minutes, minimum 5 minutes
-const AlertDistance = 200; // Distance for DX alarms in km, minimum 150 km
+const NewEmailFrequency = 5; // Frequency for new alerts in minutes, minimum 5 minutes
+const AlertDistance = 150; // Distance for DX alarms in km, minimum 150 km
 const Autostart = 'on'; // Start the alert on server startup ('on' or 'off')
 
 ////////////////////////////////////////////////////////////////
@@ -27,7 +27,7 @@ const checkInterval = 1000; // Check interval in milliseconds
 const clientIp = '127.0.0.1'; // Client IP address
 const ServerName = config.identification.tunerName; 
 const webserverPort = config.webserver.webserverPort || 8080; // Default to port 8080 if not specified
-const externalWsUrl = `ws://127.0.0.1:${webserverPort}/extra`;
+const externalWsUrl = `ws://127.0.0.1:${webserverPort}`;
 
 // Internal Variables
 let currentStatus = Autostart; // Current status of the alert system
@@ -86,7 +86,7 @@ function createMessage(status, source) {
 async function setupTextSocket() {
     if (!TextSocket || TextSocket.readyState === WebSocket.CLOSED) {
         try {
-            TextSocket = new WebSocket('ws://highpoint2000.selfhost.de:9080/text');
+            TextSocket = new WebSocket(externalWsUrl + '/text');
 
             TextSocket.addEventListener("open", () => {
                 logInfo("DX-Alert Text Websocket connected.");
@@ -238,7 +238,7 @@ function connectToWebSocket() {
         return;
     }
 
-    const ws = new WebSocket(externalWsUrl);
+    const ws = new WebSocket(externalWsUrl + '/extra');
 
     ws.on('open', () => {
         // logInfo(`DX-Alert connected to ${ws.url}`);
