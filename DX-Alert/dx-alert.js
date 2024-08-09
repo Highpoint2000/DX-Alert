@@ -1,304 +1,354 @@
-////////////////////////////////////////////////////////////
-///                                                      ///
-///  DX ALERT SCRIPT FOR FM-DX-WEBSERVER (V1.1b)          ///
-///                                                      ///
-///  by Highpoint                last update: 31.07.24   ///
-///                                                      ///
-///  https://github.com/Highpoint2000/DX-Alert           ///
-///                                                      ///
-////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+///                                                          ///
+///  DX ALERT CLIENT SCRIPT FOR FM-DX-WEBSERVER (V2.0)       ///
+///                                                          ///
+///  by Highpoint                last update: 09.08.24       ///
+///                                                          ///
+///  https://github.com/Highpoint2000/DX-Alert               ///
+///                                                          ///
+////////////////////////////////////////////////////////////////
 
-///  This plugin only works from web server version 1.2.3!!!
-
-const EmailAddress = ''; // Alternative email address for DX alerts
-const NewEmailFrequency = 60; // Repetition frequency for new alerts in minutes, minimum is 5 minutes!
-const AlertDistance = 200; // Distance for DX alarms in km, minimum is 150 kilometers!
-
-/////////////////////////////////////////////////////////////////////////////////////
+///  This plugin only works from web server version 1.2.6!!!
 
 (() => {
-    const AlertPlugin = (() => {
-        const plugin_version = 'V1.1b'; // Plugin Version
-        let AlertSocket;
-        let AlertActive = false; // Logger state
-        const ServerName = document.title;
-        let lastAlertTime = 0; // Timestamp of the last alert sent
-        let lastAlertMessage = ""; // Stores the last alert message to avoid repetition
+    const plugin_version = 'V2.0';
+    let AlertActive = false;
+    let wsSendSocket;
+    let pressTimer;
+    let buttonPressStarted = null; // Timestamp for button press start
+    let ValidEmailAddress = null; // Email address for alerts
+    let NewEmailFrequency = null;
+    let AlertDistance = null;
+    let ipAddress = null; // Global IP address
+    const ipApiUrl = 'https://api.ipify.org?format=json';
+    let checkSuccessTimer;
 
-        // CSS Styles for buttonWrapper
-        const buttonWrapperStyles = `
-            display: flex;
-            justify-content: left;
-            align-items: center;
-            margin-top: 0px;
-        `;
+    // CSS styles for buttonWrapper
+    const buttonWrapperStyles = `
+        display: flex;
+        justify-content: left;
+        align-items: center;
+        margin-top: 0px;
+    `;
 
-        // Validate the email address
-        function validateEmail(email) {
-            // Simple email validation rule
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
-        }
-
-        // Function to determine the valid email address
-        function getValidEmail() {
-            if (validateEmail(EmailAddress)) {
-                return EmailAddress; // Return the valid email address
-            } else {
-                // Attempt to extract the email address from the <span>
-                const emailElement = document.querySelector('.text-small.m-0.bottom-20');
-                if (emailElement) {
-                    const emailAddressWebserver = emailElement.textContent.trim();
-                    return emailAddressWebserver; // Return the valid email address
-                } else {                
-                    console.warn('No valid email address found!');
-                }
-            }
-        }
-
-        // Ensure the correct email address is used
-        const ValidEmailAddress = getValidEmail();
-
-        // Setup AlertSocket connection
-        async function setupAlertSocket() {
-            if (!AlertSocket || AlertSocket.readyState === WebSocket.CLOSED) {
-                try {
-                    AlertSocket = await window.socketPromise;
-
-                    AlertSocket.addEventListener("open", () => {
-                        console.log("AlertSocket connected.");
-                    });
-
-                    AlertSocket.addEventListener("message", handleAlertSocketMessage);
-
-                    AlertSocket.addEventListener("error", (error) => {
-                        console.error("AlertSocket error:", error);
-                    });
-
-                    AlertSocket.addEventListener("close", (event) => {
-                        console.log("AlertSocket closed:", event);
-                        // Attempt to reconnect after a delay with exponential backoff
-                        setTimeout(setupAlertSocket, 5000);
-                    });
-
-                } catch (error) {
-                    console.error("Failed to setup AlertSocket:", error);
-                    setTimeout(setupAlertSocket, 5000); // Retry after delay
-                }
-            }
-        }
-
-        async function handleAlertSocketMessage(event) {
-            if (!AlertActive) return; // Do nothing if logger is inactive
-
+    // Function to set up WebSocket connection for sending messages
+    async function setupSendSocket() {
+        if (!wsSendSocket || wsSendSocket.readyState === WebSocket.CLOSED) {
             try {
-                const eventData = JSON.parse(event.data);
-                //console.log(eventData);
-                const frequency = eventData.freq;
-                const picode = eventData.pi;
-
-                // Process data if frequency is not in the blacklist
-                const txInfo = eventData.txInfo;
-                const station = txInfo ? txInfo.tx : "";
-                const city = txInfo ? txInfo.city : "";
-                const itu = txInfo ? txInfo.itu : "";
-                const distance = txInfo ? txInfo.dist : "";
-
-                // Check if the distance exceeds the AlertDistance and log to the console
-                if (AlertActive && distance > AlertDistance && AlertDistance > '149') {
-                    const now = Date.now();
-                    const elapsedMinutes = (now - lastAlertTime) / 60000; // Corrected to 60000 (60 * 1000) for minutes
-                    const message = `${frequency}, ${picode}, ${station}, ${city} [${itu}], ${distance} km`;
-
-                    if (elapsedMinutes > NewEmailFrequency && message !== lastAlertMessage) {
-                        const subject = `DX ALERT over ${AlertDistance} km !!!`;
-                        sendEmail(message, subject);
-                        console.log(message, subject);
-                        lastAlertTime = now; // Update the last alert time
-                        lastAlertMessage = message; // Update the last alert message
-                    }
-                }
-
+                wsSendSocket = new WebSocket('ws://highpoint2000.selfhost.de:9080/extra');
+                wsSendSocket.addEventListener("open", () => {
+                    console.log("Send WebSocket connected.");
+                    sendInitialWebSocketMessage();
+                });
+                wsSendSocket.addEventListener("message", handleWebSocketMessage);
+                wsSendSocket.addEventListener("error", (error) => console.error("Send WebSocket error:", error));
+                wsSendSocket.addEventListener("close", (event) => {
+                    console.log("Send WebSocket closed:", event);
+                    setTimeout(setupSendSocket, 5000); // Reconnect after 5 seconds
+                });
             } catch (error) {
-                console.error("Error handling AlertSocket message:", error);
+                console.error("Failed to setup Send WebSocket:", error);
+                setTimeout(setupSendSocket, 5000); // Reconnect after 5 seconds
             }
         }
+    }
 
-        function sendEmail(message, subject) {
-            // Gather the form data
-            var formData = {
-                service_id: 'service_xz2llv8',
-                template_id: 'template_1yir5nq',
-                user_id: '8UurLFsfxfeCVmTjB',
-                template_params: {
-                    'from_name': ServerName,
-                    'to_email': ValidEmailAddress, // Use the determined or default email address
-                    'subject': subject,
-                    'message': message,
+    // Function to handle WebSocket messages
+    function handleWebSocketMessage(event) {
+
+        try {
+            const eventData = JSON.parse(event.data);
+            console.log(eventData); 
+            if (eventData.type === 'DX-Alert' && eventData.source !== ipAddress) {
+                const { status, email, freq, dist, subject, message } = eventData.value;
+
+                switch (status) {
+                    case 'success':
+                        if (eventData.target === ipAddress) {
+                            console.log("Server response: Test email request was successful.");
+                            showCustomAlert(`Test email request sent to ${ValidEmailAddress} successfully!!!`);
+                        }
+                        break;
+                    case 'sent':
+                        console.log(`${subject} ${message} / Email sent to ${email}`);
+						if (isTuneAuthenticated) {
+							showCustomAlert(`${subject} ${message} / Email sent to ${email}`);
+						}						
+                        break;
+                    case 'error':
+                        console.error("Server response: Test email request failed.", message);
+                        showCustomAlert(`Error! Failed to send test email to ${ValidEmailAddress}!`);
+                        break;
+                    case 'on':
+                    case 'off':
+                        ValidEmailAddress = email;
+                        setButtonStatus(status === 'on');
+                        AlertActive = status === 'on';
+                        NewEmailFrequency = freq;
+                        AlertDistance = dist;
+                        setButtonStatus(AlertActive);
+
+                        if (isTuneAuthenticated && status === 'on' && (eventData.target === '255.255.255.255' || eventData.target === ipAddress)) {
+                            const alertStatusMessage = `DX ALERT ${AlertActive ? 'activated' : 'deactivated'}`;
+                            const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance} km / Email frequency: ${NewEmailFrequency} min.)` : '';
+                            console.log(`${alertStatusMessage}${alertDetailsMessage}`);
+
+                            showCustomAlert(`DX ALERT activated for ${ValidEmailAddress}\n(Alert distance: ${AlertDistance} km / Email frequency: ${NewEmailFrequency} min.)`);
+                        }
+                        break;
                 }
-            };
 
-            fetch('https://api.emailjs.com/api/v1.0/email/send', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            })
-            .then(function(response) {
-                if (response.ok) {
-                    console.log('Email sent successfully!');
-                } else {
-                    return response.text().then(function(errorText) {
-                        throw new Error('Failed to send email. Error: ' + errorText);
-                    });
-                }
-            })
-            .catch(function(error) {
-                console.error(error.message);
-            });
-        }
-
-        let pressTimer; // Variable to track the long press duration
-        const AlertButton = document.createElement('button');
-
-        function initializeAlertButton() {
-            // Check if ValidEmailAddress contains '@' before proceeding
-            if (!ValidEmailAddress.includes('@')) {
-                console.warn("Invalid EmailAddress format. DX ALERT button not displayed.");
-                return;
             }
+            
+            // Check if no case was matched and execute the 500ms check
+            if (checkSuccessTimer) {
+                clearTimeout(checkSuccessTimer);
+            }
+            checkSuccessTimer = setTimeout(() => {
+                if (!ValidEmailAddress) {
+                    showCustomAlert('DX-Alert Server Error!');
+                }
+            }, 500);
+        
+        } catch (error) {
+            console.error("Error handling WebSocket message:", error);
+        }
+    }
 
-            const buttonWrapper = document.getElementById('button-wrapper');
-            
-            checkAdminMode();
-            setupAlertSocket();
-            
+    // Function to send an initial WebSocket message with the IP address
+    async function sendInitialWebSocketMessage() {
+        try {
+            const response = await fetch(ipApiUrl);
+            const ipData = await response.json();
+            ipAddress = ipData.ip;
+
+            if (wsSendSocket && wsSendSocket.readyState === WebSocket.OPEN) {
+                const message = JSON.stringify({
+                    type: 'DX-Alert',
+                    value: { status: 'request' },
+                    source: ipAddress,
+                    target: '127.0.0.1'
+                });
+                wsSendSocket.send(message);
+            } else {
+                console.error('WebSocket connection is not open.');
+            }
+        } catch (error) {
+            console.error('Failed to fetch IP address or send WebSocket message:', error);
+        }
+    }
+
+    // Initialize the alert button once the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', () => {
+        setupSendSocket();
+        checkAdminMode();
+        setTimeout(initializeAlertButton, 1000);
+    });
+
+    // Update button status based on whether alerts are active
+    function setButtonStatus(isActive) {
+        if (AlertButton) {
+            AlertButton.classList.toggle('bg-color-4', isActive);
+            AlertButton.classList.toggle('bg-color-2', !isActive);
+            AlertActive = isActive;
+        }
+    }
+
+    // Create the alert button and append it to the button wrapper
+    const AlertButton = document.createElement('button');
+
+    function initializeAlertButton() {
+        const buttonWrapper = document.getElementById('button-wrapper') || createDefaultButtonWrapper();
+
+        if (buttonWrapper) {
             AlertButton.id = 'DX-Alert-on-off';
             AlertButton.classList.add('hide-phone');
-            AlertButton.setAttribute('aria-label', 'DX ALERT');
             AlertButton.setAttribute('data-tooltip', 'DX ALERT on/off');
             AlertButton.innerHTML = '<strong>DX ALERT</strong>';
             AlertButton.style.marginTop = '16px';
+            AlertButton.style.marginLeft = '5px';
             AlertButton.style.width = '100px';
             AlertButton.classList.add('bg-color-2');
             AlertButton.style.borderRadius = '0px';
             AlertButton.title = `Plugin Version: ${plugin_version}`;
-
-            if (buttonWrapper) {
-                AlertButton.style.marginLeft = '5px';
-                buttonWrapper.appendChild(AlertButton);
-                console.log('Alert button successfully added to button-wrapper.');
-            } else {
-                console.error('buttonWrapper Element not found. Adding button to standard location.');
-                const wrapperElement = document.querySelector('.tuner-info');
-
-                if (wrapperElement) {
-                    const buttonWrapper = document.createElement('div');
-                    buttonWrapper.classList.add('button-wrapper');
-                    buttonWrapper.id = 'button-wrapper'; 
-                    buttonWrapper.appendChild(AlertButton);
-                    wrapperElement.appendChild(buttonWrapper);
-                    const emptyLine = document.createElement('br');
-                    wrapperElement.appendChild(emptyLine);
-                } else {
-                    console.error('standard location not found. Unable to add button.');
-                }
-            }
-
-            // Load the toggle status from localStorage
-            const savedStatus = localStorage.getItem('alertActive');
-            if (savedStatus === 'true') {
-                AlertActive = true;
-                AlertButton.classList.remove('bg-color-2');
-                AlertButton.classList.add('bg-color-4');
-                console.log("DX ALERT activated from saved state.");
-            } else {
-                AlertActive = false;
-                AlertButton.classList.remove('bg-color-4');
-                AlertButton.classList.add('bg-color-2');
-                console.log("DX ALERT deactivated from saved state.");
-            }
-
-            AlertButton.addEventListener('click', toggleAlert);
+            buttonWrapper.appendChild(AlertButton);
+            AlertButton.addEventListener('click', handleAlertButtonClick);
             AlertButton.addEventListener('mousedown', startPressTimer);
             AlertButton.addEventListener('mouseup', cancelPressTimer);
             AlertButton.addEventListener('mouseleave', cancelPressTimer);
+            console.log('Alert button successfully added.');
+        } else {
+            console.error('Unable to add button.');
+        }
+    }
 
-            checkAdminMode();
-            setupAlertSocket();
+    // Create a default button wrapper if it does not exist
+    function createDefaultButtonWrapper() {
+        const wrapperElement = document.querySelector('.tuner-info');
+        if (wrapperElement) {
+            const buttonWrapper = document.createElement('div');
+            buttonWrapper.classList.add('button-wrapper');
+            buttonWrapper.id = 'button-wrapper';
+            buttonWrapper.appendChild(AlertButton);
+            wrapperElement.appendChild(buttonWrapper);
+            wrapperElement.appendChild(document.createElement('br'));
+            return buttonWrapper;
+        } else {
+            console.error('Standard location not found. Unable to add button.');
+            return null;
+        }
+    }
+
+    // Start a timer to handle long presses of the button
+    function startPressTimer() {
+        buttonPressStarted = Date.now();
+        pressTimer = setTimeout(() => {
+            sendTestEmail();
+            buttonPressStarted = null;
+        }, 1000);
+    }
+
+    // Cancel the press timer and toggle alert status if needed
+    function cancelPressTimer() {
+        clearTimeout(pressTimer);
+        if (buttonPressStarted) {
+            toggleAlert();
+        }
+        buttonPressStarted = null;
+    }
+
+    // Function to send a test email
+    async function sendTestEmail() {
+        if (!isTuneAuthenticated) {
+            showCustomAlert("You must be authenticated to use the DX ALERT feature.");
+            return;
+        }
+        if (!ValidEmailAddress) {
+            showCustomAlert("Valid email address not set on the webserver or in the dx-alert server script!");
+            return;
         }
 
-        function startPressTimer() {
-            pressTimer = setTimeout(sendTestEmail, 2000); // 2000 ms for long press
-        }
+        const testMessage = `This is a test email for DX ALERT. The current alert status is ${AlertActive ? 'Active' : 'Inactive'}.`;
+        const testSubject = "DX ALERT Test Email";
 
-        function cancelPressTimer() {
-            clearTimeout(pressTimer);
-        }
+        try {
+            const response = await fetch(ipApiUrl);
+            if (!response.ok) throw new Error('Failed to fetch IP address');
+            const ipData = await response.json();
+            const ipAddress = ipData.ip || 'unknown';
 
-        function sendTestEmail() {
-            if (!isTuneAuthenticated) {
-                console.warn("Test email press ignored: Not authenticated.");
-                alert("You must be authenticated to use the DX ALERT feature.");
-                return;
-            }
-            const testMessage = "This is a test email for DX ALERT.";
-            const testSubject = "DX ALERT Test Email";
-            sendEmail(testMessage, testSubject);
-            console.log(`Test email sent to: ${ValidEmailAddress}`);
-            alert(`Test email sent to ${ValidEmailAddress}.`);
-        }
+            const message = JSON.stringify({
+                type: 'DX-Alert',
+                value: {
+                    status: 'test',
+                    email: ValidEmailAddress,
+                    subject: testSubject,
+                    message: testMessage,
+                },
+                source: ipAddress,
+                target: '127.0.0.1'
+            });
 
-        function toggleAlert() {
-            if (!isTuneAuthenticated) {
-                console.warn("DX ALERT button press ignored: Not authenticated.");
-                alert("You must be authenticated to use the DX ALERT feature.");
-                return;
-            }
-            AlertActive = !AlertActive; // Toggle status
-            lastAlertTime = 0; // Reset the last alert time
-            lastAlertMessage = ""; // Reset the last alert message
-
-            if (AlertActive) {
-                AlertButton.classList.remove('bg-color-2');
-                AlertButton.classList.add('bg-color-4');
-                console.log("DX ALERT activated");
+            if (wsSendSocket && wsSendSocket.readyState === WebSocket.OPEN) {
+                wsSendSocket.send(message);
+                showCustomAlert('Test email requested, please wait!');
             } else {
-                AlertButton.classList.remove('bg-color-4');
-                AlertButton.classList.add('bg-color-2');
-                console.log("DX ALERT deactivated");
+                console.error('WebSocket connection is not open.');
+                showCustomAlert('WebSocket connection is not open.');
             }
+        } catch (error) {
+            console.error('Failed to send test email via WebSocket:', error);
+            showCustomAlert('Error! Failed to send test email to ${ValidEmailAddress}!');
+        }
+    }
 
-            // Save the toggle status to localStorage
-            localStorage.setItem('alertActive', AlertActive);
+    // Function to show a custom alert notification
+    function showCustomAlert(message) {
+        // Create the notification element
+        const notification = document.createElement('div');
+        notification.textContent = message;
+        notification.style.position = 'fixed';
+        notification.style.top = '20px';  // Adjust the top position as needed
+        notification.style.left = '50%';  // Center horizontally
+        notification.style.transform = 'translateX(-50%)';  // Adjust for exact center alignment
+        notification.style.padding = '15px 30px';  // Larger padding for bigger notification
+        notification.style.borderRadius = '8px';  // Slightly rounded corners
+        notification.style.zIndex = '1000';
+        notification.style.opacity = '1';
+        notification.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+        notification.style.fontSize = '16px';  // Larger font size
+        notification.style.fontWeight = 'bold'; // Optional: make the text bold
+        notification.style.textAlign = 'center'; // Center the text
+        notification.style.color = '#fff';  // Set text color to white for other messages
+
+        // Conditionally set the background color based on message content
+        if (message.toLowerCase().includes('error')) {
+            notification.style.backgroundColor = '#FF0000';  // Red for errors
+        } else if (message.toLowerCase().includes('!!!')) {
+			notification.style.backgroundColor = '#008000';  // Green for email alerts
+		} else {		
+            notification.style.backgroundColor = '#333';  // Dark gray for other messages
         }
 
-        var isTuneAuthenticated = false; // Set global variable initially to false
+        // Append the notification to the body
+        document.body.appendChild(notification);
 
-        function checkAdminMode() {
-            var bodyText = document.body.textContent || document.body.innerText;
-            var isAdminLoggedIn = bodyText.includes("You are logged in as an administrator.") || bodyText.includes("You are logged in as an adminstrator.");
-            var canControlReceiver = bodyText.includes("You are logged in and can control the receiver.");
-            if (ValidEmailAddress) {
-                if (isAdminLoggedIn || canControlReceiver) {
-                    console.log(`Admin or Tune mode and email address: ${ValidEmailAddress} found. DX ALERT Authentication successful.`);
-                    isTuneAuthenticated = true;
-                } else {
-                    console.log("No authentication or valid email found. Authentication failed.");
-                    isTuneAuthenticated = false;
-                }
-            }
+        // Remove the notification after 4 seconds
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(-50%) translateY(-20px)';  // Optional: slide up effect
+            setTimeout(() => document.body.removeChild(notification), 500); // Remove the element after fade-out
+        }, 4000);
+    }
+
+    // Handle click on the alert button (currently no status change)
+    async function handleAlertButtonClick() {
+        if (!isTuneAuthenticated) {
+            showCustomAlert("You must be authenticated to use the DX ALERT feature.");
+            return;
+        }
+        // No status change on click; handled by press timer
+    }
+
+    // Toggle alert status and update WebSocket
+    async function toggleAlert() {
+        if (!isTuneAuthenticated) {
+            showCustomAlert("You must be authenticated to use the DX ALERT feature.");
+            return;
         }
 
-        // Wait for the DOM to load and then execute the function after a short delay
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(initializeAlertButton, 1000); // Delays execution by 1 second
-        });
+        AlertActive = !AlertActive;
 
-        document.addEventListener('DOMContentLoaded', function() {
-            checkAdminMode();
-        });
+        try {
+            const response = await fetch(ipApiUrl);
+            if (!response.ok) throw new Error('Failed to fetch IP address');
+            const ipData = await response.json();
+            ipAddress = ipData.ip || 'unknown';
 
-    })();
+            const message = JSON.stringify({
+                type: 'DX-Alert',
+                value: { status: AlertActive ? 'on' : 'off' },
+                source: ipAddress,
+                target: '127.0.0.1'
+            });
+
+            if (wsSendSocket && wsSendSocket.readyState === WebSocket.OPEN) {
+                wsSendSocket.send(message);
+            } else {
+                console.error('WebSocket connection is not open.');
+            }
+        } catch (error) {
+            console.error('Failed to fetch IP address or send WebSocket message:', error);
+        }
+
+    }
+
+    // Check if user is authenticated as admin or receiver controller
+    var isTuneAuthenticated = false;
+
+    function checkAdminMode() {
+        const bodyText = document.body.textContent || document.body.innerText;
+        isTuneAuthenticated = bodyText.includes("You are logged in as an adminstrator.") || bodyText.includes("You are logged in and can control the receiver.");
+        console.log(isTuneAuthenticated ? `DX ALERT Authentication successful.` : "Authentication failed.");
+    }
 })();
