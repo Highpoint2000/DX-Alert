@@ -274,41 +274,53 @@ app.use('/', endpoints);
 wss.on('connection', (ws, request) => {
   const output = serverConfig.xdrd.wirelessConnection ? client : serialport;
   const clientIp = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
-  currentUsers++;
-  dataHandler.showOnlineUsers(currentUsers);
-  if(currentUsers === 1 && serverConfig.autoShutdown === true && serverConfig.xdrd.wirelessConnection) {
-    serverConfig.xdrd.wirelessConnection === true ? connectToXdrd() : serialport.write('x\n');
+  
+  let clientIpTest = clientIp.split(',')[0].trim();
+
+  // Ignore if the IP is 127.0.0.1
+  if (clientIpTest !== '127.0.0.1') {
+
+    currentUsers++;
+    dataHandler.showOnlineUsers(currentUsers);
+  
+    dataHandler.showOnlineUsers(currentUsers);
+    if(currentUsers === 1 && serverConfig.autoShutdown === true && serverConfig.xdrd.wirelessConnection) {
+      serverConfig.xdrd.wirelessConnection === true ? connectToXdrd() : serialport.write('x\n');
+    }
+
+    // Use ipinfo.io API to get geolocation information
+    https.get(`https://ipinfo.io/${clientIp}/json`, (response) => {
+      let data = '';
+
+      response.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      response.on('end', () => {
+        try {
+          const locationInfo = JSON.parse(data);
+          const options = { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+          const connectionTime = new Date().toLocaleString([], options);
+ 
+          if(locationInfo.country === undefined) {
+            const userData = { ip: clientIp, location: 'Unknown', time: connectionTime, instance: ws };
+            storage.connectedUsers.push(userData);
+            logInfo(`Web client \x1b[32mconnected\x1b[0m (${clientIp}) \x1b[90m[${currentUsers}]\x1b[0m`);
+          } else {
+            const userLocation = `${locationInfo.city}, ${locationInfo.region}, ${locationInfo.country}`;
+            const userData = { ip: clientIp, location: userLocation, time: connectionTime, instance: ws };
+            storage.connectedUsers.push(userData);
+            logInfo(`Web client \x1b[32mconnected\x1b[0m (${clientIp}) \x1b[90m[${currentUsers}]\x1b[0m Location: ${locationInfo.city}, ${locationInfo.region}, ${locationInfo.country}`);
+          }
+        } catch (error) {
+          logInfo(`Web client \x1b[32mconnected\x1b[0m (${clientIp}) \x1b[90m[${currentUsers}]\x1b[0m`);
+        }
+      });
+    }).on('error', (err) => {
+      logInfo(`Web client \x1b[32mconnected\x1b[0m (${clientIp}) \x1b[90m[${currentUsers}]\x1b[0m`);
+    });
   }
 
-  // Use ipinfo.io API to get geolocation information
-  https.get(`https://ipinfo.io/${clientIp}/json`, (response) => {
-    let data = '';
-
-    response.on('data', (chunk) => {
-      data += chunk;
-    });
-
-    response.on('end', () => {
-      try {
-        const locationInfo = JSON.parse(data);
-        const options = { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-        const connectionTime = new Date().toLocaleString([], options);
-
-        if(locationInfo.country === undefined) {
-          const userData = { ip: clientIp, location: 'Unknown', time: connectionTime, instance: ws };
-          storage.connectedUsers.push(userData);
-          logInfo(`Web client \x1b[32mconnected\x1b[0m (${clientIp}) \x1b[90m[${currentUsers}]\x1b[0m`);
-        } else {
-          const userLocation = `${locationInfo.city}, ${locationInfo.region}, ${locationInfo.country}`;
-          const userData = { ip: clientIp, location: userLocation, time: connectionTime, instance: ws };
-          storage.connectedUsers.push(userData);
-          logInfo(`Web client \x1b[32mconnected\x1b[0m (${clientIp}) \x1b[90m[${currentUsers}]\x1b[0m Location: ${locationInfo.city}, ${locationInfo.region}, ${locationInfo.country}`);
-        }
-      } catch (error) {
-        logInfo(`Web client \x1b[32mconnected\x1b[0m (${clientIp}) \x1b[90m[${currentUsers}]\x1b[0m`);
-      }
-    });
-  });
 
   ws.on('message', (message) => {
     const command = message.toString();
