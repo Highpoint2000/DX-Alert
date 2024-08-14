@@ -1,3 +1,6 @@
+// index.js - Mod by Highpoint
+// Version for loading server-side plugins
+
 // Library imports
 const express = require('express');
 const endpoints = require('./endpoints');
@@ -29,7 +32,7 @@ const storage = require('./storage');
 const { serverConfig, configExists } = require('./server_config');
 const pjson = require('../package.json');
 
-// Dynamically require *_server.js files for server-side plugins
+// Function to find server files
 function findServerFiles(dir) {
   let results = [];
   fs.readdirSync(dir).forEach(file => {
@@ -43,9 +46,33 @@ function findServerFiles(dir) {
   return results;
 }
 
-const pluginsDir = path.join(__dirname, '..', 'plugins');
-findServerFiles(pluginsDir).forEach(require);
+// Start plugins with delay
+function startPluginsWithDelay(plugins, delay) {
+  plugins.forEach((pluginPath, index) => {
+    setTimeout(() => {
+      const pluginName = path.basename(pluginPath); // Extract plugin name from path
+      require(pluginPath);
+      logInfo(`-----------------------------------------------------------------`);
+      logInfo(`Plugin ${pluginName} has been loaded.`);
+    }, delay * index);
+  });
+  
+  // Add final log line after all plugins are loaded
+  setTimeout(() => {
+    logInfo(`-----------------------------------------------------------------`);
+  }, delay * plugins.length);
+}
 
+// Get all plugins and start them with delay
+const pluginsDir = path.join(__dirname, '..', 'plugins');
+const plugins = findServerFiles(pluginsDir);
+
+// Start the first plugin after 3 seconds, then the rest with 3 seconds delay
+if (plugins.length > 0) {
+  setTimeout(() => {
+    startPluginsWithDelay(plugins, 3000); // Start plugins with 3 seconds interval
+  }, 3000); // Initial delay of 3 seconds for the first plugin
+}
 
 console.log(`\x1b[32m
  _____ __  __       ______  __ __        __   _                                  
@@ -54,7 +81,7 @@ console.log(`\x1b[32m
 |  _| | |  | |_____| |_| /  \\    \\ V  V /  __/ |_) \\__ \\  __/ |   \\ V /  __/ |   
 |_|   |_|  |_|     |____/_/\\_\\    \\_/\\_/ \\___|_.__/|___/\\___|_|    \\_/ \\___|_|                                                
 `);
-console.log('\x1b[0mFM-DX Webserver', pjson.version);
+console.log('\x1b[0mFM-DX-Webserver', pjson.version);
 console.log('\x1b[90m―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――');
 
 // Start ffmpeg
@@ -274,50 +301,44 @@ wss.on('connection', (ws, request) => {
   
   let clientIpTest = clientIp.split(',')[0].trim();
 
-  // Ignore if the IP is 127.0.0.1
-  if (clientIpTest !== '127.0.0.1') {
-
-    currentUsers++;
+	if (clientIp !== '127.0.0.1' || (request.connection && request.connection.remoteAddress && request.connection.remoteAddress !== '127.0.0.1') || (request.headers && request.headers['origin'] && request.headers['origin'].trim() !== '')) {
+		currentUsers++;
+	}
+	
     dataHandler.showOnlineUsers(currentUsers);
-  
-    dataHandler.showOnlineUsers(currentUsers);
-    if(currentUsers === 1 && serverConfig.autoShutdown === true && serverConfig.xdrd.wirelessConnection) {
-      serverConfig.xdrd.wirelessConnection === true ? connectToXdrd() : serialport.write('x\n');
-    }
-
-    // Use ipinfo.io API to get geolocation information
-    https.get(`https://ipinfo.io/${clientIp}/json`, (response) => {
-      let data = '';
-
-      response.on('data', (chunk) => {
-        data += chunk;
-      });
-
-      response.on('end', () => {
-        try {
-          const locationInfo = JSON.parse(data);
-          const options = { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-          const connectionTime = new Date().toLocaleString([], options);
- 
-          if(locationInfo.country === undefined) {
-            const userData = { ip: clientIp, location: 'Unknown', time: connectionTime, instance: ws };
-            storage.connectedUsers.push(userData);
-            logInfo(`Web client \x1b[32mconnected\x1b[0m (${clientIp}) \x1b[90m[${currentUsers}]\x1b[0m`);
-          } else {
-            const userLocation = `${locationInfo.city}, ${locationInfo.region}, ${locationInfo.country}`;
-            const userData = { ip: clientIp, location: userLocation, time: connectionTime, instance: ws };
-            storage.connectedUsers.push(userData);
-            logInfo(`Web client \x1b[32mconnected\x1b[0m (${clientIp}) \x1b[90m[${currentUsers}]\x1b[0m Location: ${locationInfo.city}, ${locationInfo.region}, ${locationInfo.country}`);
-          }
-        } catch (error) {
-          logInfo(`Web client \x1b[32mconnected\x1b[0m (${clientIp}) \x1b[90m[${currentUsers}]\x1b[0m`);
-        }
-      });
-    }).on('error', (err) => {
-      logInfo(`Web client \x1b[32mconnected\x1b[0m (${clientIp}) \x1b[90m[${currentUsers}]\x1b[0m`);
-    });
+  if(currentUsers === 1 && serverConfig.autoShutdown === true && serverConfig.xdrd.wirelessConnection) {
+    serverConfig.xdrd.wirelessConnection === true ? connectToXdrd() : serialport.write('x\n');
   }
 
+  // Use ipinfo.io API to get geolocation information
+  https.get(`https://ipinfo.io/${clientIp}/json`, (response) => {
+    let data = '';
+
+    response.on('data', (chunk) => {
+      data += chunk;
+    });
+
+    response.on('end', () => {
+      try {
+        const locationInfo = JSON.parse(data);
+        const options = { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+        const connectionTime = new Date().toLocaleString([], options);
+
+        if(locationInfo.country === undefined) {
+          const userData = { ip: clientIp, location: 'Unknown', time: connectionTime, instance: ws };
+          storage.connectedUsers.push(userData);
+          logInfo(`Web client \x1b[32mconnected\x1b[0m (${clientIp}) \x1b[90m[${currentUsers}]\x1b[0m`);
+        } else {
+          const userLocation = `${locationInfo.city}, ${locationInfo.region}, ${locationInfo.country}`;
+          const userData = { ip: clientIp, location: userLocation, time: connectionTime, instance: ws };
+          storage.connectedUsers.push(userData);
+          logInfo(`Web client \x1b[32mconnected\x1b[0m (${clientIp}) \x1b[90m[${currentUsers}]\x1b[0m Location: ${locationInfo.city}, ${locationInfo.region}, ${locationInfo.country}`);
+        }
+      } catch (error) {
+        logInfo(`Web client \x1b[32mconnected\x1b[0m (${clientIp}) \x1b[90m[${currentUsers}]\x1b[0m`);
+      }
+    });
+  });
 
   ws.on('message', (message) => {
     const command = message.toString();
@@ -379,7 +400,9 @@ wss.on('connection', (ws, request) => {
   });
 
   ws.on('close', (code, reason) => {
-    currentUsers--;
+    if (clientIp !== '127.0.0.1' || (request.connection && request.connection.remoteAddress && request.connection.remoteAddress !== '127.0.0.1') || (request.headers && request.headers['origin'] && request.headers['origin'].trim() !== '')) {
+		currentUsers--;
+	}
     dataHandler.showOnlineUsers(currentUsers);
   
     // Find the index of the user's data in storage.connectedUsers array
@@ -408,10 +431,13 @@ wss.on('connection', (ws, request) => {
     }
 
     logInfo(`Web client \x1b[31mdisconnected\x1b[0m (${clientIp}) \x1b[90m[${currentUsers}]`);
+
   });  
 
-  ws.on('error', console.error);
+  ws.on('error', console.error); 
+
 });
+
 
 // CHAT WEBSOCKET BLOCK
 chatWss.on('connection', (ws, request) => {
@@ -480,13 +506,14 @@ rdsWss.on('connection', (ws, request) => {
 });
 
 
+//additional web socket for using plugins
 ExtraWss.on('connection', (ws, request)  => { 
     ws.on('message', message => {
 
         const messageData = JSON.parse(message);
         const modifiedMessage = JSON.stringify(messageData);
 
-        // Broadcast the message to all other clients
+        //Broadcast the message to all other clients
         ExtraWss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(modifiedMessage); // Send the message to all clients
@@ -495,13 +522,14 @@ ExtraWss.on('connection', (ws, request)  => {
     });
 
     ws.on('close', () => {
-        //logInfo('WebSocket Extra connection closed'); // Use custom logInfo function
+        // logInfo('WebSocket Extra connection closed'); // Use custom logInfo function
     });
 
     ws.on('error', error => {
         logError('WebSocket Extra error: ' + error); // Use custom logError function
     });
 });
+
 
 // Websocket register for /text, /audio and /chat paths 
 httpServer.on('upgrade', (request, socket, head) => {
@@ -526,10 +554,10 @@ httpServer.on('upgrade', (request, socket, head) => {
       });
     });
    } else if (request.url === '/extra') {
-	 //sessionMiddleware(request, {}, () => {
+	 sessionMiddleware(request, {}, () => {
        ExtraWss.handleUpgrade(request, socket, head, (ws) => {
 		  ExtraWss.emit('connection', ws, request);
-     // });
+      });
 	});
   } else {
 	socket.destroy();
