@@ -34,7 +34,7 @@
 	// Extract WebserverURL and WebserverPORT from the current page URL
     const currentURL = new URL(window.location.href);
     const WebserverURL = currentURL.hostname;
-    const WebserverPath = currentURL.pathname;
+    const WebserverPath = currentURL.pathname.replace(/setup/g, '');
     let WebserverPORT = currentURL.port || (currentURL.protocol === 'https:' ? '443' : '80'); // Default ports if not specified
 
     // Determine WebSocket protocol and port
