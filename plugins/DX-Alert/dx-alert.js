@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT CLIENT SCRIPT FOR FM-DX-WEBSERVER (V2.0)       ///
+///  DX ALERT CLIENT SCRIPT FOR FM-DX-WEBSERVER (V2.0a BETA) ///
 ///                                                          ///
-///  by Highpoint                last update: 09.08.24       ///
+///  by Highpoint                last update: 16.08.24       ///
 ///                                                          ///
 ///  https://github.com/Highpoint2000/DX-Alert               ///
 ///                                                          ///
@@ -11,7 +11,7 @@
 ///  This plugin only works from web server version 1.2.6!!!
 
 (() => {
-    const plugin_version = 'V2.0';
+    const plugin_version = 'V2.0 BETA';
     let AlertActive = false;
     let wsSendSocket;
     let pressTimer;
