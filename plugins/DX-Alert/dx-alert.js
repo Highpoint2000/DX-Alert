@@ -34,12 +34,13 @@
 	// Extract WebserverURL and WebserverPORT from the current page URL
     const currentURL = new URL(window.location.href);
     const WebserverURL = currentURL.hostname;
+    const WebserverPath = currentURL.pathname;
     let WebserverPORT = currentURL.port || (currentURL.protocol === 'https:' ? '443' : '80'); // Default ports if not specified
 
     // Determine WebSocket protocol and port
     const protocol = currentURL.protocol === 'https:' ? 'wss:' : 'ws:'; // Determine WebSocket protocol
     const WebsocketPORT = WebserverPORT; // Use the same port as HTTP/HTTPS
-	const WEBSOCKET_URL = `${protocol}//${WebserverURL}:${WebsocketPORT}/extra`; // WebSocket URL with /extra
+    const WEBSOCKET_URL = `${protocol}//${WebserverURL}:${WebsocketPORT}${WebserverPath}extra`; // WebSocket URL with /extra
 
     // Function to set up WebSocket connection for sending messages
     async function setupSendSocket() {
