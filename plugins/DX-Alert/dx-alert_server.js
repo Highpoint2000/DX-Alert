@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V2.0a BETA) ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.0 BETA)  ///
 ///                                                          ///
-///  by Highpoint                last update: 16.08.24       ///
+///  by Highpoint                last update: 18.08.24       ///
 ///                                                          ///
 ///  https://github.com/Highpoint2000/DX-Alert               ///
 ///                                                          ///
@@ -11,9 +11,13 @@
 ///  This plugin only works from web server version 1.2.6!!!
 
 // Configuration Variables
+const EmailAlert = 'on'; // Enable sending of alerts via email
 const EmailAddress = ''; // Alternative email address for DX alerts
-const NewEmailFrequency = 60; // Frequency for new alerts in minutes, minimum 5 minutes
-const AlertDistance = 200; // Distance for DX alarms in km, minimum 150 km
+const NewEmailFrequency = 5; // Frequency for new alerts in minutes, minimum 5 minutes
+const AlertDistance = 150; // Distance for DX alarms in km, minimum 150 km
+const TelegramAlert = 'off';  // Enable sending of alerts to Telegram
+const TelegramToken = '';   // Token of your Telegram bot
+const TelegramChatId = '';    // Telegram chat_id to send alerts to
 const Autostart = 'on'; // Start the alert on server startup ('on' or 'off')
 
 ////////////////////////////////////////////////////////////////
@@ -25,7 +29,7 @@ const config = require('./../../config.json');
 // WebSocket and Server Configuration
 const checkInterval = 1000; // Check interval in milliseconds
 const clientIp = '127.0.0.1'; // Client IP address
-const ServerName = config.identification.tunerName; 
+const ServerName = config.identification.tunerName;
 const webserverPort = config.webserver.webserverPort || 8080; // Default to port 8080 if not specified
 const externalWsUrl = `ws://127.0.0.1:${webserverPort}`;
 
@@ -49,12 +53,12 @@ function getValidEmail() {
     if (validateEmail(EmailAddress)) {
         return EmailAddress;
     }
-    
+
     // If EmailAddress is invalid or empty, check config.identification.contact
     if (!EmailAddress && validateEmail(config.identification.contact)) {
         return config.identification.contact;
     }
-    
+
     // If neither is valid, return an empty string
     return '';
 }
@@ -62,7 +66,7 @@ function getValidEmail() {
 const ValidEmailAddress = getValidEmail();
 
 // If the email is invalid, stop further execution
-if (ValidEmailAddress === '') {
+if (ValidEmailAddress === '' && EmailAlert === 'on') {
     logError("DX-Alert: No valid email address found. DX ALERT not started.");
     process.exit(1); // Exit the script with a failure code
 }
@@ -78,7 +82,7 @@ function createMessage(status, source) {
             dist: AlertDistance
         },
         source: clientIp,
-		target: source
+        target: source
     };
 }
 
@@ -126,34 +130,39 @@ function handleTextSocketMessage(event) {
         }
 
         // Process alert if conditions are met
-        if (currentStatus === 'on' && distance > AlertDistance && AlertDistance > 149) {
+        if (currentStatus === 'on' && distance > AlertDistance && AlertDistance > 49) {
             if (processingAlert) return;
 
             const now = Date.now();
             const elapsedMinutes = Math.floor((now - lastAlertTime) / 60000);
-            const message = `${frequency}, ${picode}, ${station}, ${city} [${itu}], ${distance} km`;
+            const message = `${ServerName} received station ${station} on ${frequency} MHz with PI: ${picode} from ${city} in [${itu}] which is ${distance} km away.`;
 
             if (shouldSendAlert(elapsedMinutes, message)) {
                 processingAlert = true;
-                const subject = `DX ALERT over ${AlertDistance} km !!!`;
-                sendEmail(subject, message);
-                logInfo(subject, message);			            
+                if (EmailAlert === 'on') {
+                    const subject = `DX Alert: ${ServerName} received a station from ${distance} km away.`;
+                    sendEmail(subject, message);
+                }
+                if (TelegramAlert === 'on') {
+                    sendTelegram(message);
+                }
+                logInfo(subject, message);
                 lastAlertTime = now;
                 lastAlertMessage = message;
 
                 setTimeout(() => processingAlert = false, 1000); // Reset processing flag after delay
             }
-        } 
+        }
     } catch (error) {
         logError("DX-Alert: Error handling TextSocket message:", error);
     }
 }
 
-// Determine if a new alert should be sent
+// Determine if a new email alert should be sent
 function shouldSendAlert(elapsedMinutes, message) {
-    return (elapsedMinutes === 0 || elapsedMinutes > NewEmailFrequency) && 
-           message !== lastAlertMessage && 
-           NewEmailFrequency > 4;
+    return (elapsedMinutes === 0 || elapsedMinutes > NewEmailFrequency) &&
+        message !== lastAlertMessage &&
+        NewEmailFrequency > 0;
 }
 
 // Reset alert status when the system is turned off
@@ -164,7 +173,7 @@ function resetAlertStatus() {
 }
 
 // Function to send email using EmailJS
-function sendEmail(subject, message, source) {    
+function sendEmail(subject, message, source) {
     const formData = {
         service_id: 'service_xz2llv8',
         template_id: 'template_1yir5nq',
@@ -183,17 +192,17 @@ function sendEmail(subject, message, source) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
     })
-    .then(response => {
-        if (response.ok) {
-            handleEmailResponse(subject, message, source);
-        } else {
-            return response.text().then(errorText => {
-				sendWebSocketNotification('error', subject, message, source);
-                throw new Error('Failed to send email. Error: ' + errorText);
-            });
-        }
-    })
-    .catch(error => logError(error.message));
+        .then(response => {
+            if (response.ok) {
+                handleEmailResponse(subject, message, source);
+            } else {
+                return response.text().then(errorText => {
+                    sendWebSocketNotification('error', subject, message, source);
+                    throw new Error('Failed to send email. Error: ' + errorText);
+                });
+            }
+        })
+        .catch(error => logError(error.message));
 }
 
 // Handle email response
@@ -205,6 +214,29 @@ function handleEmailResponse(subject, message, source) {
         logInfo(`DX-Alert email sent to ${ValidEmailAddress}`);
         sendWebSocketNotification('sent', subject, message, source);
     }
+}
+
+// Function to send message to Telegram
+function sendTelegram(message, source) {
+
+    fetch('https://api.telegram.org/bot' + TelegramToken + '/sendMessage?chat_id=' + TelegramChatId + '&text=' + message)
+        .then(response => {
+            if (response.ok) {
+                handleTelegramResponse(message, source);
+            } else {
+                return response.text().then(errorText => {
+                    sendWebSocketNotification('error', message, source);
+                    throw new Error('Failed to send Telegram message. Error: ' + errorText);
+                });
+            }
+        })
+        .catch(error => logError(error.message));
+}
+
+// Handle Telegram response
+function handleTelegramResponse(message, source) {
+    logInfo(`DX-Alert sent to Telegram`);
+    sendWebSocketNotification('sent', message, source);
 }
 
 // Send a WebSocket notification
@@ -295,12 +327,12 @@ function handleDXAlertMessage(message, ws) {
         ws.send(JSON.stringify(createMessage(currentStatus, message.source)));
     } else if (status === 'test') {
         logInfo(`${message.type} received "${status}" from ${message.source}`);
-        sendEmail(message.value.subject, message.value.message, message.source);          
+        sendEmail(message.value.subject, message.value.message, message.source);
     } else if (status === 'on' || status === 'off') {
         logInfo(`${message.type} received "${status}" from ${message.source}`);
         currentStatus = status;
         ws.send(JSON.stringify(createMessage(currentStatus, '255.255.255.255')));
-		logInfo(`${message.type} responding with "${status}"`);
+        logInfo(`${message.type} responding with "${status}"`);
     }
 }
 
