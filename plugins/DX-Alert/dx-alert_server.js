@@ -14,7 +14,7 @@
 const EmailAlert = 'on'; // Enable sending of alerts via email
 const EmailAddress = ''; // Alternative email address for DX alerts
 const NewEmailFrequency = 5; // Frequency for new alerts in minutes, minimum 5 minutes
-const AlertDistance = 150; // Distance for DX alarms in km, minimum 150 km
+const AlertDistance = 200; // Distance for DX alarms in km, minimum 150 km
 const TelegramAlert = 'off';  // Enable sending of alerts to Telegram
 const TelegramToken = '';   // Token of your Telegram bot
 const TelegramChatId = '';    // Telegram chat_id to send alerts to
@@ -130,7 +130,7 @@ function handleTextSocketMessage(event) {
         }
 
         // Process alert if conditions are met
-        if (currentStatus === 'on' && distance > AlertDistance && AlertDistance > 49) {
+        if (currentStatus === 'on' && distance > AlertDistance && AlertDistance > 149) {
             if (processingAlert) return;
 
             const now = Date.now();
@@ -162,7 +162,7 @@ function handleTextSocketMessage(event) {
 function shouldSendAlert(elapsedMinutes, message) {
     return (elapsedMinutes === 0 || elapsedMinutes > NewEmailFrequency) &&
         message !== lastAlertMessage &&
-        NewEmailFrequency > 0;
+        NewEmailFrequency > 4;
 }
 
 // Reset alert status when the system is turned off
