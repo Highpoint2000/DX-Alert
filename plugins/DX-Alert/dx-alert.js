@@ -1,8 +1,10 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT CLIENT SCRIPT FOR FM-DX-WEBSERVER (V3.0 BETA)  ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.0)       ///
 ///                                                          ///
-///  by Highpoint                last update: 16.08.24       ///
+///  by Highpoint                last update: 28.08.24       ///
+///                                                          ///
+///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
 ///  https://github.com/Highpoint2000/DX-Alert               ///
 ///                                                          ///
@@ -69,26 +71,50 @@
 
         try {
             const eventData = JSON.parse(event.data);
-            // console.log(eventData); 
+			console.log(eventData); 
             if (eventData.type === 'DX-Alert' && eventData.source !== ipAddress) {
-                const { status, email, freq, dist, subject, message } = eventData.value;
+                const { status, EmailAlert, email, TelegramAlert, freq, dist, subject, message } = eventData.value;
 
                 switch (status) {
                     case 'success':
                         if (eventData.target === ipAddress) {
-                            console.log("Server response: Test email request was successful.");
-                            showCustomAlert(`Test email request sent to ${ValidEmailAddress} successfully!!!`);
-                        }
+							if (EmailAlert === 'on' && TelegramAlert === 'on') {
+								showCustomAlert(`Test email request sent to ${ValidEmailAddress} and Telegram successfully!!!`);	
+								console.log("Server response: Test email request sent to ${ValidEmailAddress} and Telegram successfully.");								
+							} else if (EmailAlert === 'on') {
+								showCustomAlert(`Test email request sent to ${ValidEmailAddress} successfully!!!`);	
+								console.log("Server response: Test email request sent to ${ValidEmailAddress} successfully.");	
+								} else if (TelegramAlert === 'on') {
+									showCustomAlert(`Test email request sent to Telegram successfully!!!`);	
+									console.log("Server response: Test email request sent to Telegram successfully.");	
+									} else {
+										showCustomAlert(`Error: No services are configured!`);	
+									}
+						}
                         break;
                     case 'sent':
-                        console.log(`${subject} ${message} / Email sent to ${email}`);
-						if (isTuneAuthenticated) {
-							showCustomAlert(`${subject} ${message} / Email sent to ${email}`);
-						}						
-                        break;
+						if (EmailAlert === 'on' && TelegramAlert === 'on') {
+							console.log(`DX-Alert: ${message} / Sent Telegram Message and email to ${email}`);
+							if (isTuneAuthenticated) {
+								showCustomAlert(`DX-Alert: ${message} / Sent Telegram Message and email to ${email}`);
+								}
+							} else if (EmailAlert === 'on') {
+								console.log(`${message} / Email sent to ${email}`);
+								if (isTuneAuthenticated) {
+									showCustomAlert(`DX-Alert: ${message} / Email sent to ${email}`);
+									}
+								} else if (TelegramAlert === 'on') {
+									console.log(`DX-Alert: ${message} / Sent Telegram Message`);
+									if (isTuneAuthenticated) {
+										showCustomAlert(`DX-Alert: ${message} / Sent Telegram Message`);
+										}
+									} else {
+										showCustomAlert(`Error: No services are configured!`);	
+									}
+                    break;
                     case 'error':
                         console.error("Server response: Test email request failed.", message);
-                        showCustomAlert(`Error! Failed to send test email to ${ValidEmailAddress}!`);
+                        showCustomAlert(`Error! Failed to send test email to ${ValidEmailAddress} or telegram!`);
                         break;
                     case 'on':
                     case 'off':
@@ -101,10 +127,19 @@
 
                         if (isTuneAuthenticated && status === 'on' && (eventData.target === '255.255.255.255' || eventData.target === ipAddress)) {
                             const alertStatusMessage = `DX ALERT ${AlertActive ? 'activated' : 'deactivated'}`;
-                            const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance} km / Email frequency: ${NewEmailFrequency} min.)` : '';
-                            console.log(`${alertStatusMessage}${alertDetailsMessage}`);
-
-                            showCustomAlert(`DX ALERT activated for ${ValidEmailAddress}\n(Alert distance: ${AlertDistance} km / Email frequency: ${NewEmailFrequency} min.)`);
+							if (EmailAlert === 'on' && TelegramAlert === 'on') {
+								const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)` : '';
+								console.log(`${alertStatusMessage}${alertDetailsMessage}`);
+								showCustomAlert(`DX ALERT activated for Telegram & ${ValidEmailAddress}\n(Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)`);
+								} else if (EmailAlert === 'on') {
+									const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)` : '';
+									console.log(`${alertStatusMessage}${alertDetailsMessage}`);
+									showCustomAlert(`DX ALERT activated for ${ValidEmailAddress}\n(Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)`);
+									} else if (TelegramAlert === 'on') {
+										const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)` : '';
+										console.log(`${alertStatusMessage}${alertDetailsMessage}`);
+										showCustomAlert(`DX ALERT activated for Telegram\n(Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)`);
+									}
                         }
                         break;
                 }
@@ -227,7 +262,7 @@
         }
         buttonPressStarted = null;
     }
-
+	
     // Function to send a test email
     async function sendTestEmail() {
         if (!isTuneAuthenticated) {
@@ -239,9 +274,9 @@
             return;
         }
 
-        const testMessage = `This is a test email for DX ALERT. The current alert status is ${AlertActive ? 'Active' : 'Inactive'}.`;
-        const testSubject = "DX ALERT Test Email";
-
+        const testMessage = `This is a test for DX ALERT. The current alert status is ${AlertActive ? 'Active' : 'Inactive'}.`;
+		const testSubject = "DX ALERT Test";
+		
         try {
             const response = await fetch(ipApiUrl);
             if (!response.ok) throw new Error('Failed to fetch IP address');
@@ -262,7 +297,7 @@
 
             if (wsSendSocket && wsSendSocket.readyState === WebSocket.OPEN) {
                 wsSendSocket.send(message);
-                showCustomAlert('Test email requested, please wait!');
+                showCustomAlert('Test requested, please wait!');
             } else {
                 console.error('WebSocket connection is not open.');
                 showCustomAlert('WebSocket connection is not open.');
