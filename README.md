@@ -7,11 +7,9 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 
 
 
-## Version 3.0 SERVER BASED VERSION (only works from web server version 1.2.6 !!!)
+## Version 3.0a BETA (only works from web server version 1.2.6 !!!)
 
-- Telegram integration (Group chat support)
-- Own email provider configurable (e.g. GMAIL)
-- alert frequency & distance are now completely freely configurable
+- Fixed incorrect message when deactivating the DX Alert button
 
 ## Installation notes:
 
@@ -37,6 +35,12 @@ Please note:
 - In the Netherlands and Germany there are already existing Telegram DX Alert groups ("NL FM DX Alerts" und "DE FM DX Alerts") that you can join and publish your logs. You can get further information and the tokens from me.
 
 ## History: 
+
+### Version 3.0 (only works from web server version 1.2.6 !!!)
+
+- Telegram integration (Group chat support)
+- Own email provider configurable (e.g. GMAIL)
+- alert frequency & distance are now completely freely configurable
 
 ### Version 2.0 SERVER BASED VERSION (only works from web server version 1.2.6 !!!)
 
