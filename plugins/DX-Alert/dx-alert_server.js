@@ -20,8 +20,8 @@ const AlertDistance = 250; 	// Distance for DX alarms in km
 
 const EmailAlert = 'off'; 								// Enable sending of alerts via email
 const EmailAddressTo = ''; 								// Alternative email address for DX alerts, if the field remains empty, the email address of the web server will be used 
-const EmailAddressFrom = 'highpoint2000@googlemail.com';// Email address for account
-const EmailPassword = 'ykqe qqed woap pcxd';			// E-mail password/application-specific password 
+const EmailAddressFrom = '';// Email address for account
+const EmailPassword = '';			// E-mail password/application-specific password 
 const EmailHost = 'smtp.gmail.com'; 					// e.g. 'smtp.gmail.com' for GMAIL
 const EmailPort = '587'; 								// e.g. '587' for GMAIL
 const EmailSecure = false;								// true for port 465, false for other ports
