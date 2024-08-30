@@ -27,8 +27,8 @@ const EmailPort = '587'; 								// e.g. '587' for GMAIL
 const EmailSecure = false;								// true for port 465, false for other ports
 
 const TelegramAlert = 'on';  											// Enable sending of alerts to Telegram
-const TelegramToken = '6907344016:AAGClMRsh7FvmB3bNO3FZIJkCDPu8vquhwY'; // Token Ihres Telegram-Bots
-const TelegramChatId = '-1002160536171';    							// Telegram chat_id to send alerts to
+const TelegramToken = ''; // Token Ihres Telegram-Bots
+const TelegramChatId = '';    							// Telegram chat_id to send alerts to
 
 ////////////////////////////////////////////////////////////////
 
