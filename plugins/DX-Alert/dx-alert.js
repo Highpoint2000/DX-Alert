@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.0)       ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.0a BETA) ///
 ///                                                          ///
-///  by Highpoint                last update: 28.08.24       ///
+///  by Highpoint                last update: 30.08.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -13,7 +13,7 @@
 ///  This plugin only works from web server version 1.2.6!!!
 
 (() => {
-    const plugin_version = 'V3.0';
+    const plugin_version = 'V3.0a BETA';
     let AlertActive = false;
     let wsSendSocket;
     let pressTimer;
@@ -94,19 +94,19 @@
                         break;
                     case 'sent':
 						if (EmailAlert === 'on' && TelegramAlert === 'on') {
-							console.log(`DX-Alert: ${message} / Sent Telegram Message and email to ${email}`);
+							console.log(`DX-Alert!!! ${message} / Sent Telegram Message and email to ${email}`);
 							if (isTuneAuthenticated) {
-								showCustomAlert(`DX-Alert: ${message} / Sent Telegram Message and email to ${email}`);
+								showCustomAlert(`DX-Alert!!! ${message} / Sent Telegram Message and email to ${email}`);
 								}
 							} else if (EmailAlert === 'on') {
-								console.log(`${message} / Email sent to ${email}`);
+								console.log(`DX-Alert!!! ${message} / Email sent to ${email}`);
 								if (isTuneAuthenticated) {
-									showCustomAlert(`DX-Alert: ${message} / Email sent to ${email}`);
+									showCustomAlert(`DX-Alert!!! ${message} / Email sent to ${email}`);
 									}
 								} else if (TelegramAlert === 'on') {
-									console.log(`DX-Alert: ${message} / Sent Telegram Message`);
+									console.log(`DX-Alert!!! ${message} / Sent Telegram Message`);
 									if (isTuneAuthenticated) {
-										showCustomAlert(`DX-Alert: ${message} / Sent Telegram Message`);
+										showCustomAlert(`DX-Alert!!! ${message} / Sent Telegram Message`);
 										}
 									} else {
 										showCustomAlert(`Error: No services are configured!`);	
@@ -140,7 +140,12 @@
 										console.log(`${alertStatusMessage}${alertDetailsMessage}`);
 										showCustomAlert(`DX ALERT activated for Telegram\n(Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)`);
 									}
-                        }
+                        } else {
+							if (isTuneAuthenticated) {
+								console.log(`DX ALERT deactivated`);
+								showCustomAlert(`DX ALERT deactivated`);
+							}
+						}
                         break;
                 }
 
