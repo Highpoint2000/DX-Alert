@@ -331,7 +331,7 @@ function sendWebSocketNotification(status, subject, message, source) {
 
 // Connect to the main WebSocket server
 function connectToWebSocket() {
-    if (!ValidEmailAddressTo.includes('@')) {
+    if (EmailAlert === 'on' && !ValidEmailAddressTo.includes('@')) {
         logError("Email Address not set or invalid format! DX ALERT not started.");
         return;
     }
