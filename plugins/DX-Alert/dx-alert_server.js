@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.0)       ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.0a BETA) ///
 ///                                                          ///
-///  by Highpoint                last update: 28.08.24       ///
+///  by Highpoint                last update: 30.08.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -13,22 +13,22 @@
 ///  This plugin only works from web server version 1.2.6!!!
 
 // Configuration Variables
-const Scanner_URL_PORT = ''; 						// Webserver URL for Scanner Logfile Download (if plugin installed) e.g. 'http://highpoint2000.selfhost.de:9080'
+const Scanner_URL_PORT = 'http://fmdx.ddns.net:9080'; // Webserver URL for Scanner Logfile Download (if plugin installed) e.g. 'http://highpoint2000.selfhost.de:9080'
 
-const AlertFrequency = 60; 						// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent 
-const AlertDistance = 250; 						// Distance for DX alarms in km
+const AlertFrequency = 30; 	// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent 
+const AlertDistance = 250; 	// Distance for DX alarms in km
 
-const EmailAlert = 'off'; 						// Enable sending of alerts via email
-const EmailAddressTo = ''; 						// Alternative email address for DX alerts, if the field remains empty, the email address of the web server will be used 
-const EmailAddressFrom = '';						// Email address for account
-const EmailPassword = '';						// E-mail password/application-specific password 
+const EmailAlert = 'off'; 								// Enable sending of alerts via email
+const EmailAddressTo = ''; 								// Alternative email address for DX alerts, if the field remains empty, the email address of the web server will be used 
+const EmailAddressFrom = 'highpoint2000@googlemail.com';// Email address for account
+const EmailPassword = 'ykqe qqed woap pcxd';			// E-mail password/application-specific password 
 const EmailHost = 'smtp.gmail.com'; 					// e.g. 'smtp.gmail.com' for GMAIL
-const EmailPort = '587'; 						// e.g. '587' for GMAIL
-const EmailSecure = false;						// true for port 465, false for other ports
+const EmailPort = '587'; 								// e.g. '587' for GMAIL
+const EmailSecure = false;								// true for port 465, false for other ports
 
-const TelegramAlert = 'off';  						// Enable sending of alerts to Telegram
-const TelegramToken = ''; 						// Token Ihres Telegram-Bots
-const TelegramChatId = '';    						// Telegram chat_id to send alerts to
+const TelegramAlert = 'on';  											// Enable sending of alerts to Telegram
+const TelegramToken = '6907344016:AAGClMRsh7FvmB3bNO3FZIJkCDPu8vquhwY'; // Token Ihres Telegram-Bots
+const TelegramChatId = '-1002160536171';    							// Telegram chat_id to send alerts to
 
 ////////////////////////////////////////////////////////////////
 
@@ -192,8 +192,8 @@ async function handleTextSocketMessage(event) {
 
             const now = Date.now();
             const elapsedMinutes = Math.floor((now - lastAlertTime) / 60000);
-			const subject = `DX Alert: ${ServerName} received ${station}[${itu}] from ${distance} km away. `;
-            let message = `${ServerName} received station ${station} on ${frequency} MHz with PI: ${picode} from ${city} in [${itu}] which is ${distance} km away.`;
+			const subject = `DX Alert: ${ServerName} received ${station}[${itu}] from ${distance} km away!!! `;
+            let message = `${ServerName} received station ${station} on ${frequency} MHz with PI: ${picode} from ${city} in [${itu}] which is ${distance} km away. `;
 				
 			if (Scanner_URL_PORT !== '') {
 				const currentDate = new Date().toISOString().slice(0, 10); // Current date in 'YYYY-MM-DD' format
@@ -407,7 +407,7 @@ function handleDXAlertMessage(message, ws) {
 			if (TelegramAlert === 'on') {
 				sendTelegram(message.value.subject, `${ServerName} sent a Telegram test message!!! The current alert status is ${currentStatus}.`, message.source);
 			}	
-			} else if (status === 'on' || status === 'off') {
+			} else if (status === 'on') {
 				logInfo(`${message.type} received "${status}" from ${message.source}`);
 				if (EmailAlert === 'on' || TelegramAlert === 'on') { 
 					ws.send(JSON.stringify(createMessage(currentStatus, message.source)));
@@ -419,6 +419,10 @@ function handleDXAlertMessage(message, ws) {
 					currentStatus = 'off';
 				}
 				ws.send(JSON.stringify(createMessage(currentStatus, '255.255.255.255')));        
+			} else if (status === 'off') {
+					ws.send(JSON.stringify(createMessage('off', message.source)));
+					logInfo(`${message.type} responding with "off"`);
+					currentStatus = 'off';
 			}
 }
 
