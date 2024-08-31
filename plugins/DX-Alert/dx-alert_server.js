@@ -2,7 +2,7 @@
 ///                                                          ///
 ///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.0a BETA) ///
 ///                                                          ///
-///  by Highpoint                last update: 30.08.24       ///
+///  by Highpoint                last update: 31.08.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -13,21 +13,21 @@
 ///  This plugin only works from web server version 1.2.6!!!
 
 // Configuration Variables
-const Scanner_URL_PORT = 'http://fmdx.ddns.net:9080'; // Webserver URL for Scanner Logfile Download (if plugin installed) e.g. 'http://highpoint2000.selfhost.de:9080'
+const Scanner_URL_PORT = ''; // Webserver URL for Scanner Logfile Download (if plugin installed) e.g. 'http://fmdx.ddns.net:9080'
 
 const AlertFrequency = 30; 	// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent 
 const AlertDistance = 250; 	// Distance for DX alarms in km
 
 const EmailAlert = 'off'; 								// Enable sending of alerts via email
 const EmailAddressTo = ''; 								// Alternative email address for DX alerts, if the field remains empty, the email address of the web server will be used 
-const EmailAddressFrom = '';// Email address for account
-const EmailPassword = '';			// E-mail password/application-specific password 
+const EmailAddressFrom = '';							// Email address for account
+const EmailPassword = '';								// E-mail password/application-specific password 
 const EmailHost = 'smtp.gmail.com'; 					// e.g. 'smtp.gmail.com' for GMAIL
 const EmailPort = '587'; 								// e.g. '587' for GMAIL
 const EmailSecure = false;								// true for port 465, false for other ports
 
-const TelegramAlert = 'on';  											// Enable sending of alerts to Telegram
-const TelegramToken = ''; // Token Ihres Telegram-Bots
+const TelegramAlert = 'off';  							// Enable sending of alerts to Telegram
+const TelegramToken = ''; 								// Token Ihres Telegram-Bots
 const TelegramChatId = '';    							// Telegram chat_id to send alerts to
 
 ////////////////////////////////////////////////////////////////
@@ -197,18 +197,36 @@ async function handleTextSocketMessage(event) {
 				
 			if (Scanner_URL_PORT !== '') {
 				const currentDate = new Date().toISOString().slice(0, 10); // Current date in 'YYYY-MM-DD' format
-				const fileName = `SCANNER_${currentDate}_filtered.html`;
-				const fileURL = `${Scanner_URL_PORT}/logs/${fileName}`;
+
+				// Calculate the previous date
+				const previousDate = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().slice(0, 10); // Previous date in 'YYYY-MM-DD' format
+
+				// Construct filenames for current and previous dates
+				const fileNameCurrent = `SCANNER_${currentDate}_filtered.html`;
+				const fileNamePrevious = `SCANNER_${previousDate}_filtered.html`;
+
+				// Construct URLs for both current and previous date files
+				const fileURLCurrent = `${Scanner_URL_PORT}/logs/${fileNameCurrent}`;
+				const fileURLPrevious = `${Scanner_URL_PORT}/logs/${fileNamePrevious}`;
 
 				try {
-					const response = await fetch(fileURL, { method: 'HEAD' });
-					if (response.ok) {
-						message += `\n\nLogfile: ${fileURL}`;
+				// Check if the current date file exists
+				const responseCurrent = await fetch(fileURLCurrent, { method: 'HEAD' });
+				if (responseCurrent.ok) {
+					message += `\n\nLogfile: ${fileURLCurrent}`;
+				} else {
+					// If current date file does not exist, check for the previous date file
+					const responsePrevious = await fetch(fileURLPrevious, { method: 'HEAD' });
+					if (responsePrevious.ok) {
+						message += `\n\nLogfile: ${fileURLPrevious}`;
+					} else {
+						message += `\n\nLogfile not available for current or previous date.`;
 					}
-				} catch (error) {
-					logError("DX-Alert: Error checking file availability:", error);
 				}
+			} catch (error) {
+				logError("DX-Alert: Error checking file availability:", error);
 			}
+		}
 
             if (shouldSendAlert(elapsedMinutes, message)) {
                 processingAlert = true;
