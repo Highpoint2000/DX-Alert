@@ -11,6 +11,7 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 
 - Fixed incorrect message when deactivating the DX Alert button
 - Download link adjustments are the scanner log files
+- Revised error message
 
 ## Installation notes:
 
