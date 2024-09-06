@@ -9,6 +9,7 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 
 ## Version 3.0a BETA (only works from web server version 1.2.6 !!!)
 
+- Switching the communication protocol to session ID instead of IP address 
 - Fixed incorrect message when deactivating the DX Alert button
 - Download link adjustments are the scanner log files
 - Revised error message
