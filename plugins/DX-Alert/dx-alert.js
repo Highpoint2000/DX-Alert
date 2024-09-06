@@ -21,8 +21,12 @@
     let ValidEmailAddress = null; // Email address for alerts
     let NewEmailFrequency = null;
     let AlertDistance = null;
-    let ipAddress = null; // Global IP address
-    const ipApiUrl = 'https://api.ipify.org?format=json';
+
+    // Generate a random 12-digit session ID to replace the IP address
+    let sessionId = Math.floor(Math.random() * 1e12).toString().padStart(12, '0'); // Generates a 12-digit random session ID
+
+    const ipApiUrl = 'https://api.ipify.org?format=json'; // Placeholder URL (not used anymore)
+
     let checkSuccessTimer;
 
     // CSS styles for buttonWrapper
@@ -33,7 +37,7 @@
         margin-top: 0px;
     `;
 	
-	// Extract WebserverURL and WebserverPORT from the current page URL
+    // Extract WebserverURL and WebserverPORT from the current page URL
     const currentURL = new URL(window.location.href);
     const WebserverURL = currentURL.hostname;
     const WebserverPath = currentURL.pathname.replace(/setup/g, '');
@@ -68,16 +72,15 @@
 
     // Function to handle WebSocket messages
     function handleWebSocketMessage(event) {
-
         try {
             const eventData = JSON.parse(event.data);
 			console.log(eventData); 
-            if (eventData.type === 'DX-Alert' && eventData.source !== ipAddress) {
+            if (eventData.type === 'DX-Alert' && eventData.source !== sessionId) {
                 const { status, EmailAlert, email, TelegramAlert, freq, dist, subject, message } = eventData.value;
 
                 switch (status) {
                     case 'success':
-                        if (eventData.target === ipAddress) {
+                        if (eventData.target === sessionId) {
 							if (EmailAlert === 'on' && TelegramAlert === 'on') {
 								showCustomAlert(`Test email request sent to ${ValidEmailAddress} and Telegram successfully!!!`);	
 								console.log("Server response: Test email request sent to ${ValidEmailAddress} and Telegram successfully.");								
@@ -133,7 +136,7 @@
                         AlertDistance = dist;
                         setButtonStatus(AlertActive);
 
-                        if (isTuneAuthenticated && status === 'on' && (eventData.target === '255.255.255.255' || eventData.target === ipAddress)) {
+                        if (isTuneAuthenticated && status === 'on' && (eventData.target === '000000000000' || eventData.target === sessionId)) {
                             const alertStatusMessage = `DX ALERT ${AlertActive ? 'activated' : 'deactivated'}`;
 							if (EmailAlert === 'on' && TelegramAlert === 'on') {
 								const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)` : '';
@@ -174,26 +177,22 @@
         }
     }
 
-    // Function to send an initial WebSocket message with the IP address
+    // Function to send an initial WebSocket message with the session ID
     async function sendInitialWebSocketMessage() {
         try {
-            const response = await fetch(ipApiUrl);
-            const ipData = await response.json();
-            ipAddress = ipData.ip;
-
             if (wsSendSocket && wsSendSocket.readyState === WebSocket.OPEN) {
                 const message = JSON.stringify({
                     type: 'DX-Alert',
                     value: { status: 'request' },
-                    source: ipAddress,
-                    target: '127.0.0.1'
+                    source: sessionId,
+                    target: 'Server'
                 });
                 wsSendSocket.send(message);
             } else {
                 console.error('WebSocket connection is not open.');
             }
         } catch (error) {
-            console.error('Failed to fetch IP address or send WebSocket message:', error);
+            console.error('Failed to send WebSocket message:', error);
         }
     }
 
@@ -291,11 +290,6 @@
 		const testSubject = "DX ALERT Test";
 		
         try {
-            const response = await fetch(ipApiUrl);
-            if (!response.ok) throw new Error('Failed to fetch IP address');
-            const ipData = await response.json();
-            const ipAddress = ipData.ip || 'unknown';
-
             const message = JSON.stringify({
                 type: 'DX-Alert',
                 value: {
@@ -304,8 +298,8 @@
                     subject: testSubject,
                     message: testMessage,
                 },
-                source: ipAddress,
-                target: '127.0.0.1'
+                source: sessionId,
+                target: 'Server'
             });
 
             if (wsSendSocket && wsSendSocket.readyState === WebSocket.OPEN) {
@@ -379,16 +373,11 @@
         AlertActive = !AlertActive;
 
         try {
-            const response = await fetch(ipApiUrl);
-            if (!response.ok) throw new Error('Failed to fetch IP address');
-            const ipData = await response.json();
-            ipAddress = ipData.ip || 'unknown';
-
             const message = JSON.stringify({
                 type: 'DX-Alert',
                 value: { status: AlertActive ? 'on' : 'off' },
-                source: ipAddress,
-                target: '127.0.0.1'
+                source: sessionId,
+                target: 'Server'
             });
 
             if (wsSendSocket && wsSendSocket.readyState === WebSocket.OPEN) {
@@ -397,7 +386,7 @@
                 console.error('WebSocket connection is not open.');
             }
         } catch (error) {
-            console.error('Failed to fetch IP address or send WebSocket message:', error);
+            console.error('Failed to send WebSocket message:', error);
         }
 
     }
