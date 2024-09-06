@@ -2,7 +2,7 @@
 ///                                                          ///
 ///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.0a BETA) ///
 ///                                                          ///
-///  by Highpoint                last update: 31.08.24       ///
+///  by Highpoint                last update: 06.09.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -38,7 +38,7 @@ const config = require('./../../config.json');
 
 // WebSocket and Server Configuration
 const checkInterval = 1000; // Check interval in milliseconds
-const clientIp = '127.0.0.1'; // Client IP address
+const clientID = 'Server';
 const ServerName = config.identification.tunerName;
 const webserverPort = config.webserver.webserverPort || 8080; // Default to port 8080 if not specified
 const externalWsUrl = `ws://127.0.0.1:${webserverPort}`;
@@ -140,7 +140,7 @@ function createMessage(status, source) {
             freq: AlertFrequency,
             dist: AlertDistance
         },
-        source: clientIp,
+        source: clientID,
         target: source
     };
 }
@@ -334,7 +334,7 @@ function sendWebSocketNotification(status, subject, message, source) {
                 subject: subject,
                 message: message,
             },
-            source: clientIp,
+            source: clientID,
             target: source
         };
         try {
@@ -358,7 +358,7 @@ function connectToWebSocket() {
 
     ws.on('open', () => {
         // logInfo(`DX-Alert connected to ${ws.url}`);
-        ws.send(JSON.stringify(createMessage(currentStatus, '255.255.255.255'))); // Send initial status
+        ws.send(JSON.stringify(createMessage(currentStatus, '000000000000'))); // Send initial status
         // Delay the logging of broadcast info by 100 ms
         setTimeout(() => {
             logBroadcastInfo();
@@ -397,7 +397,7 @@ function handleWebSocketMessage(data, ws) {
     try {
         const message = JSON.parse(data.toString());
 
-        if (message.source === clientIp) return; // Ignore messages from self
+        if (message.source === clientID) return; // Ignore messages from self
 
         if (message.type === 'DX-Alert') {
             handleDXAlertMessage(message, ws);
@@ -436,7 +436,7 @@ function handleDXAlertMessage(message, ws) {
 					logInfo(`${message.type} responding with "off"`);
 					currentStatus = 'off';
 				}
-				ws.send(JSON.stringify(createMessage(currentStatus, '255.255.255.255')));        
+				ws.send(JSON.stringify(createMessage(currentStatus, '000000000000')));        
 			} else if (status === 'off') {
 					ws.send(JSON.stringify(createMessage('off', message.source)));
 					logInfo(`${message.type} responding with "off"`);
