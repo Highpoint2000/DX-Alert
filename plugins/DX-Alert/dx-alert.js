@@ -2,7 +2,7 @@
 ///                                                          ///
 ///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.0a BETA) ///
 ///                                                          ///
-///  by Highpoint                last update: 31.08.24       ///
+///  by Highpoint                last update: 06.09.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -113,8 +113,16 @@
 									}
                     break;
                     case 'error':
-                        console.error("Server response: Test email request failed.", message);
-                        showCustomAlert(`Error! Failed to send test email to ${ValidEmailAddress} or telegram!`);
+						if (EmailAlert === 'on') {
+							console.error("Server response: Test email request failed.", message);
+						    showCustomAlert(`Error! Failed to send test email to ${ValidEmailAddress}!`);							
+						} else if (TelegramAlert === 'on') {
+							console.error("Server response: Telegram Test request failed.", message);
+						    showCustomAlert(`Error! Failed to send test to Telegram!`);
+							} else if (EmailAlert === 'on' && TelegramAlert === 'on') {
+								console.error("Server response: Telegram or email Test request failed.", message);
+								showCustomAlert(`Error! Failed to send test to ${ValidEmailAddress} or to Telegram!`);
+							}
                         break;
                     case 'on':
                     case 'off':
