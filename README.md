@@ -19,13 +19,15 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 1. [Download](https://github.com/Highpoint2000/DX-Alert/releases) the last repository as a zip
 2. Unpack all files from the plugins folder to ..fm-dx-webserver-main\plugins\ 
 3. copy, rename and overwrite the index.js version that matches the web server: \server\index_x.x.x.js to ..fm-dx-webserver-main\server\index.js
-4. Configure the email or Telegram settings in the header of the dx-alert_server.js file
-5. Start/Restart the fm-dx-webserver with "npm run webserver" on node.js console, check the console informations
-6. Activate the DX-Alert plugin in the settings
+4. Start/Restart the fm-dx-webserver with "npm run webserver" on node.js console, check the console informations
+5. Activate the DX-Alert plugin in the settings
+6. Stop or close the fm-dx-webserver
+7. Configure personal email or Telegram settings in the automatically created configPlugin.json (in the specific plugin folder!)
+8. Start/Restart the fm-dx-webserver with "npm run webserver" on node.js console, check the console informations
 
 ## Notes: 
 
-To use the plugin, you must enter a valid email address in the web server or script header, activate the email service and enter your provider's email settings for the SMTP server. If you want to use Telegram, you must enter the corresponding chat token of the Telegram group and the token of the Telegram bot (which must be a member of the Telegram group). You also have the option of entering an individual notification interval in minutes and a distance in km in the header of the server script from when the plugin should notify you. If you enter 0 minutes you will be notified of every DX protocol. After entering or changing the values, the server must be restarted! The plugin can only be activated as an authenticated user or as an admin. After registering, you can send a test email to the registered address or a test message to the Telegram group by pressing and holding the DX Alert button. The plugin is a useful addition to the [Scanner Plugin](https://github.com/Highpoint2000/webserver-scanner), so that you are always informed in the background when the reception conditions change positively!
+To use the plugin, you must enter a valid email address in the web server or the configuration file, activate the email service and enter your provider's email settings for the SMTP server. If you want to use Telegram, you must enter the corresponding chat token of the Telegram group and the token of the Telegram bot (which must be a member of the Telegram group). You also have the option of entering an individual notification interval in minutes and a distance in km in the header of the server script from when the plugin should notify you. If you enter 0 minutes you will be notified of every DX protocol. After entering or changing the values, the server must be restarted! The plugin can only be activated as an authenticated user or as an admin. After registering, you can send a test email to the registered address or a test message to the Telegram group by pressing and holding the DX Alert button. The plugin is a useful addition to the [Scanner Plugin](https://github.com/Highpoint2000/webserver-scanner), so that you are always informed in the background when the reception conditions change positively!
 
 Users who also use the Extended Description plugin should download the modified version here, which displays the buttons in one line: https://github.com/Highpoint2000/Extended-Description-plugin-MOD-by-Highpoint-
 
