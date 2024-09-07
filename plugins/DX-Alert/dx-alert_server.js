@@ -19,7 +19,9 @@ const { logInfo, logError } = require('./../../server/console');
 // Define the path to the configuration file
 const configFilePath = path.join(__dirname, 'configPlugin.json');
 
-// Default values for the configuration file
+// Default values for the configuration file 
+// Do not enter this values !!! Save your configuration in configPlugin.json. This is created automatically when you first start.
+
 const defaultConfig = {
     Scanner_URL_PORT: '',			// Webserver URL for Scanner Logfile Download (if plugin installed) e.g. 'http://fmdx.ddns.net:9080'
     AlertFrequency: 30, 			// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent 
