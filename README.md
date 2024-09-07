@@ -19,11 +19,14 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 1. [Download](https://github.com/Highpoint2000/DX-Alert/releases) the last repository as a zip
 2. Unpack all files from the plugins folder to ..fm-dx-webserver-main\plugins\ 
 3. copy, rename and overwrite the index.js version that matches the web server: \server\index_x.x.x.js to ..fm-dx-webserver-main\server\index.js
-4. Start/Restart the fm-dx-webserver with "npm run webserver" on node.js console, check the console informations
-5. Activate the DX-Alert plugin in the settings
-6. Stop or close the fm-dx-webserver
-7. Configure personal email or Telegram settings in the automatically created configPlugin.json (in the specific plugin folder!)
-8. Start/Restart the fm-dx-webserver with "npm run webserver" on node.js console, check the console informations
+4. Stop or close the fm-dx-webserver
+5. Start/Restart the fm-dx-webserver with "npm run webserver" on node.js console, check the console informations
+6. Activate the DX-Alert plugin in the settings
+7. Stop or close the fm-dx-webserver
+7. Start/Restart the fm-dx-webserver with "npm run webserver" on node.js console, check the console informations
+8. Configure personal email or Telegram settings in the automatically created configPlugin.json (in the specific plugin folder!)
+9. Stop or close the fm-dx-webserver
+10. Start/Restart the fm-dx-webserver with "npm run webserver" on node.js console, check the console informations
 
 ## Notes: 
 
