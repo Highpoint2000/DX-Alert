@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.0a BETA) ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.1)       ///
 ///                                                          ///
-///  by Highpoint                last update: 06.09.24       ///
+///  by Highpoint                last update: 07.09.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -12,29 +12,89 @@
 
 ///  This plugin only works from web server version 1.2.6!!!
 
-// Configuration Variables
-const Scanner_URL_PORT = ''; // Webserver URL for Scanner Logfile Download (if plugin installed) e.g. 'http://fmdx.ddns.net:9080'
+const path = require('path');
+const fs = require('fs');
+const { logInfo, logError } = require('./../../server/console');
 
-const AlertFrequency = 30; 	// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent 
-const AlertDistance = 250; 	// Distance for DX alarms in km
+// Define the path to the configuration file
+const configFilePath = path.join(__dirname, 'configPlugin.json');
 
-const EmailAlert = 'off'; 								// Enable sending of alerts via email
-const EmailAddressTo = ''; 								// Alternative email address for DX alerts, if the field remains empty, the email address of the web server will be used 
-const EmailAddressFrom = '';							// Email address for account
-const EmailPassword = '';								// E-mail password/application-specific password 
-const EmailHost = 'smtp.gmail.com'; 					// e.g. 'smtp.gmail.com' for GMAIL
-const EmailPort = '587'; 								// e.g. '587' for GMAIL
-const EmailSecure = false;								// true for port 465, false for other ports
+// Default values for the configuration file
+const defaultConfig = {
+    Scanner_URL_PORT: '',			// Webserver URL for Scanner Logfile Download (if plugin installed) e.g. 'http://fmdx.ddns.net:9080'
+    AlertFrequency: 30, 			// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent 
+    AlertDistance: 250, 			// Distance for DX alarms in km
+    EmailAlert: 'off', 				// Enable email alert feature, 'on' or 'off'
+    EmailAddressTo: '', 			// Alternative email address for DX alerts, if the field remains empty, the email address of the web server will be used 
+    EmailAddressFrom: '', 			// Sender email address, email address for account
+    EmailPassword: '', 				// E-mail password/application-specific password 
+    EmailHost: 'smtp.gmail.com', 	// SMTP server for email, e.g. 'smtp.gmail.com' for GMAIL
+    EmailPort: '587', 				// Port for email server, e.g. '587' for GMAIL
+    EmailSecure: false, 			// Whether to use secure connection (true for port 465, false for other ports)
+    TelegramAlert: 'off', 			// Telegram alert feature, 'on' or 'off'
+    TelegramToken: '', 				// Telegram bot token
+    TelegramChatId: '', 			// Telegram chat ID for sending alerts
+};
 
-const TelegramAlert = 'off';  							// Enable sending of alerts to Telegram
-const TelegramToken = ''; 								// Token Ihres Telegram-Bots
-const TelegramChatId = '';    							// Telegram chat_id to send alerts to
+// Function to merge default config with existing config and remove undefined values
+function mergeConfig(defaultConfig, existingConfig) {
+    // Only keep the keys that are defined in the defaultConfig
+    const updatedConfig = {};
+
+    // Add the existing values that match defaultConfig keys
+    for (const key in defaultConfig) {
+        updatedConfig[key] = key in existingConfig ? existingConfig[key] : defaultConfig[key];
+    }
+
+    return updatedConfig;
+}
+
+// Function to load or create the configuration file
+function loadConfig(filePath) {
+    let existingConfig = {};
+
+    // Check if the configuration file exists
+    if (fs.existsSync(filePath)) {
+        // Read the existing configuration file
+        existingConfig = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    } else {
+        logInfo('DX-Alert configuration not found. Creating configPlugin.json.');
+    }
+
+    // Merge the default config with the existing one, adding missing fields and removing undefined
+    const finalConfig = mergeConfig(defaultConfig, existingConfig);
+
+    // Write the updated configuration back to the file (if changes were made)
+    fs.writeFileSync(filePath, JSON.stringify(finalConfig, null, 2), 'utf-8');
+
+    return finalConfig;
+}
+
+// Load or create the configuration file
+const configPlugin = loadConfig(configFilePath);
+
+// Zugriff auf die Variablen
+const Scanner_URL_PORT = configPlugin.Scanner_URL_PORT;
+const AlertFrequency = configPlugin.AlertFrequency;
+const AlertDistance = configPlugin.AlertDistance;
+
+const EmailAlert = configPlugin.EmailAlert;
+const EmailAddressTo = configPlugin.EmailAddressTo;
+const EmailAddressFrom = configPlugin.EmailAddressFrom;
+const EmailPassword = configPlugin.EmailPassword;
+const EmailHost = configPlugin.EmailHost;
+const EmailPort = configPlugin.EmailPort;
+const EmailSecure = configPlugin.EmailSecure;
+
+const TelegramAlert = configPlugin.TelegramAlert;
+const TelegramToken = configPlugin.TelegramToken;
+const TelegramChatId = configPlugin.TelegramChatId;
+
 
 ////////////////////////////////////////////////////////////////
 
-const WebSocket = require('ws');
-const { logInfo, logError } = require('./../../server/console');
 const config = require('./../../config.json');
+const WebSocket = require('ws');
 
 // WebSocket and Server Configuration
 const checkInterval = 1000; // Check interval in milliseconds
@@ -57,8 +117,6 @@ const sentMessages = new Set(); // Track sent messages to avoid duplicates
 
 // Function to check and install missing NewModules
 const { execSync } = require('child_process');
-const path = require('path');
-const fs = require('fs');
 const NewModules = [
     'nodemailer',
 ];
