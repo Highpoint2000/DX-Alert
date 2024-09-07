@@ -1,7 +1,7 @@
 // Plugin configuration, this is used in the administration when plugins are loaded
 var pluginConfig = {
     name: 'DX Alert',
-    version: '3.0a BETA',
+    version: '3.1',
     author: 'Highpoint',
     frontEndPath: 'DX-Alert/dx-alert.js'
 }
