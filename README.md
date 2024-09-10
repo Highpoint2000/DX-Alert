@@ -31,11 +31,11 @@ The following variables can be changed in the configPlugin.json:
     Scanner_URL_PORT: '',			// OPTIONAL: External Webserver URL for Scanner Logfile Download (if plugin installed) e.g. 'http://fmdx.ddns.net:9080'
     AlertFrequency: 30, 			// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent 
     AlertDistance: 250, 			// Distance for DX alarms in km
-    EmailAlert: 'off', 				// Enable email alert feature, 'on' or 'off'
+    EmailAlert: 'off', 			// Enable email alert feature, 'on' or 'off'
     EmailAddressTo: '', 			// Alternative email address for DX alerts, if the field remains empty, the email address of the web server will be used 
     EmailAddressFrom: '', 			// Sender email address, email address for account
-    EmailPassword: '', 				// E-mail password/application-specific password 
-    EmailHost: 'smtp.gmail.com', 	// SMTP server for email, e.g. 'smtp.gmail.com' for GMAIL
+    EmailPassword: '', 			// E-mail password/application-specific password 
+    EmailHost: 'smtp.gmail.com', 	    // SMTP server for email, e.g. 'smtp.gmail.com' for GMAIL
     EmailPort: '587', 				// Port for email server, e.g. '587' for GMAIL
     EmailSecure: false, 			// Whether to use secure connection (true for port 465, false for other ports)
     TelegramAlert: 'off', 			// Telegram alert feature, 'on' or 'off'
