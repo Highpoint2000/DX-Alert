@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.1)       ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.1a)      ///
 ///                                                          ///
-///  by Highpoint                last update: 07.09.24       ///
+///  by Highpoint                last update: 10.09.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -23,7 +23,7 @@ const configFilePath = path.join(__dirname, 'configPlugin.json');
 // Do not enter this values !!! Save your configuration in configPlugin.json. This is created automatically when you first start.
 
 const defaultConfig = {
-    Scanner_URL_PORT: '',			// Webserver URL for Scanner Logfile Download (if plugin installed) e.g. 'http://fmdx.ddns.net:9080'
+    Scanner_URL_PORT: '',			// OPTIONAL: External Webserver URL for Scanner Logfile Download (if plugin installed) e.g. 'http://fmdx.ddns.net:9080'
     AlertFrequency: 30, 			// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent 
     AlertDistance: 250, 			// Distance for DX alarms in km
     EmailAlert: 'off', 				// Enable email alert feature, 'on' or 'off'
