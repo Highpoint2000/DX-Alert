@@ -78,9 +78,9 @@
             if (eventData.type === 'DX-Alert' && eventData.source !== sessionId) {
                 let { status, EmailAlert, email, TelegramAlert, freq, dist, subject, message } = eventData.value;
 				
-				// Check if "Logfile:" is present in the message
-				if (message && message.includes("Logfile:")) {
-					message = message.split("Logfile:")[0].trim(); // Keep only the part before "Logfile:"
+				// Check if "Logfile" is present in the message
+				if (message && message.includes("Logfile")) {
+					message = message.split("Logfile")[0].trim(); // Keep only the part before "Logfile:"
 				}
 
                 switch (status) {
