@@ -4,15 +4,11 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 
 ![image](https://github.com/user-attachments/assets/a9da9fb2-3cc8-4e6f-a83d-0a939d6d2c5e)
 
+## Version 3.1a (only works from web server version 1.2.6 !!!)
 
+- Shortened message output in the browser
+- Instructions for setting up Telegram included
 
-## Version 3.1 (only works from web server version 1.2.6 !!!)
-
-- Fixed configuration is now stored in configPlugin.json
-- Switching the communication protocol to session ID instead of IP address 
-- Fixed incorrect message when deactivating the DX Alert button
-- Download link adjustments for the scanner log files
-- Revised error message
 
 ## Installation notes:
 
@@ -43,6 +39,14 @@ Please note:
 - In the Netherlands and Germany there are already existing Telegram DX Alert groups ("NL FM DX Alerts" und "DE FM DX Alerts") that you can join and publish your logs. You can get further information and the tokens from me.
 
 ## History: 
+
+### Version 3.1 (only works from web server version 1.2.6 !!!)
+
+- Fixed configuration is now stored in configPlugin.json
+- Switching the communication protocol to session ID instead of IP address 
+- Fixed incorrect message when deactivating the DX Alert button
+- Download link adjustments for the scanner log files
+- Revised error message
 
 ### Version 3.0 (only works from web server version 1.2.6 !!!)
 
