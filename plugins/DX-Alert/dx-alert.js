@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.1)       ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.1a)      ///
 ///                                                          ///
-///  by Highpoint                last update: 07.09.24       ///
+///  by Highpoint                last update: 10.09.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -13,7 +13,7 @@
 ///  This plugin only works from web server version 1.2.6!!!
 
 (() => {
-    const plugin_version = 'V3.1';
+    const plugin_version = 'V3.1a';
     let AlertActive = false;
     let wsSendSocket;
     let pressTimer;
@@ -76,7 +76,12 @@
             const eventData = JSON.parse(event.data);
 			console.log(eventData); 
             if (eventData.type === 'DX-Alert' && eventData.source !== sessionId) {
-                const { status, EmailAlert, email, TelegramAlert, freq, dist, subject, message } = eventData.value;
+                let { status, EmailAlert, email, TelegramAlert, freq, dist, subject, message } = eventData.value;
+				
+				// Check if "Logfile:" is present in the message
+				if (message && message.includes("Logfile:")) {
+					message = message.split("Logfile:")[0].trim(); // Keep only the part before "Logfile:"
+				}
 
                 switch (status) {
                     case 'success':
@@ -96,20 +101,20 @@
 						}
                         break;
                     case 'sent':
-						if (EmailAlert === 'on' && TelegramAlert === 'on') {
-							console.log(`DX-Alert!!! ${message} / Sent Telegram Message and email to ${email}`);
+						if (EmailAlert === 'on' && TelegramAlert === 'on') {					
+							console.log(`DX-Alert!!! ${message} > Sent Telegram Message and email to ${email}`);
 							if (isTuneAuthenticated) {
-								showCustomAlert(`DX-Alert!!! ${message} / Sent Telegram Message and email to ${email}`);
+								showCustomAlert(`DX-Alert!!! ${message} > Sent Telegram Message and email to ${email}`);
 								}
 							} else if (EmailAlert === 'on') {
-								console.log(`DX-Alert!!! ${message} / Email sent to ${email}`);
+								console.log(`DX-Alert!!! ${message} > Email sent to ${email}`);
 								if (isTuneAuthenticated) {
-									showCustomAlert(`DX-Alert!!! ${message} / Email sent to ${email}`);
+									showCustomAlert(`DX-Alert!!! ${message} > Email sent to ${email}`);
 									}
 								} else if (TelegramAlert === 'on') {
-									console.log(`DX-Alert!!! ${message} / Sent Telegram Message`);
+									console.log(`DX-Alert!!! ${message} > Sent Telegram Message`);
 									if (isTuneAuthenticated) {
-										showCustomAlert(`DX-Alert!!! ${message} / Sent Telegram Message`);
+										showCustomAlert(`DX-Alert!!! ${message} > Sent Telegram Message`);
 										}
 									} else {
 										showCustomAlert(`Error: No services are configured!`);	
