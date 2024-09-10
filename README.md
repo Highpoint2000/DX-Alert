@@ -35,11 +35,11 @@ The following variables can be changed in the configPlugin.json:
     EmailAddressTo: '', 			// Alternative email address for DX alerts, if the field remains empty, the email address of the web server will be used 
     EmailAddressFrom: '', 			// Sender email address, email address for account
     EmailPassword: '', 			// E-mail password/application-specific password 
-    EmailHost: 'smtp.gmail.com', 	    // SMTP server for email, e.g. 'smtp.gmail.com' for GMAIL
-    EmailPort: '587', 				// Port for email server, e.g. '587' for GMAIL
+    EmailHost: 'smtp.gmail.com', 	        // SMTP server for email, e.g. 'smtp.gmail.com' for GMAIL
+    EmailPort: '587', 			// Port for email server, e.g. '587' for GMAIL
     EmailSecure: false, 			// Whether to use secure connection (true for port 465, false for other ports)
     TelegramAlert: 'off', 			// Telegram alert feature, 'on' or 'off'
-    TelegramToken: '', 				// Telegram bot token
+    TelegramToken: '', 			// Telegram bot token
     TelegramChatId: '', 			// Telegram chat ID for sending alerts
 
 ## Notes: 
