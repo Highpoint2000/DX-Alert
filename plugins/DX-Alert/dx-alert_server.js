@@ -257,8 +257,6 @@ async function handleTextSocketMessage(event) {
 				
 			if (Scanner_URL_PORT !== '') {
 				const currentDate = new Date().toISOString().slice(0, 10); // Current date in 'YYYY-MM-DD' format
-
-				// Calculate the previous date
 				const previousDate = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().slice(0, 10); // Previous date in 'YYYY-MM-DD' format
 
 				// Construct filenames for current and previous dates
@@ -270,23 +268,24 @@ async function handleTextSocketMessage(event) {
 				const fileURLPrevious = `${Scanner_URL_PORT}/logs/${fileNamePrevious}`;
 
 				try {
-				// Check if the current date file exists
-				const responseCurrent = await fetch(fileURLCurrent, { method: 'HEAD' });
+				// Make both requests simultaneously
+				const [responseCurrent, responsePrevious] = await Promise.all([
+					fetch(fileURLCurrent, { method: 'HEAD' }),
+					fetch(fileURLPrevious, { method: 'HEAD' })
+				]);
+
+				// Check if either file exists
 				if (responseCurrent.ok) {
 					message += `\n\nLogfile: ${fileURLCurrent}`;
-				} else {
-					// If current date file does not exist, check for the previous date file
-					const responsePrevious = await fetch(fileURLPrevious, { method: 'HEAD' });
-					if (responsePrevious.ok) {
+					} else if (responsePrevious.ok) {
 						message += `\n\nLogfile: ${fileURLPrevious}`;
 					} else {
 						message += `\n\nLogfile not available for current or previous date.`;
 					}
+				} catch (error) {
+					logError("DX-Alert: Error checking file availability:", error);
 				}
-			} catch (error) {
-				logError("DX-Alert: Error checking file availability:", error);
 			}
-		}
 
             if (shouldSendAlert(elapsedMinutes, message)) {
                 processingAlert = true;
