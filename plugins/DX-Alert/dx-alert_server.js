@@ -2,7 +2,7 @@
 ///                                                          ///
 ///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.1a)      ///
 ///                                                          ///
-///  by Highpoint                last update: 10.09.24       ///
+///  by Highpoint                last update: 11.09.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -14,7 +14,7 @@
 
 const path = require('path');
 const fs = require('fs');
-const { logInfo, logError } = require('./../../server/console');
+const { logInfo, logError, logDebug } = require('./../../server/console');
 
 // Define the path to the configuration file
 const configFilePath = path.join(__dirname, 'configPlugin.json');
@@ -115,6 +115,7 @@ if (EmailAlert === 'on' || TelegramAlert === 'on') {
 let lastAlertTime = Date.now(); // Last alert time
 let lastAlertMessage = ""; // Last alert message
 let TextSocket; // WebSocket connection for text alerts
+let message_link;
 const sentMessages = new Set(); // Track sent messages to avoid duplicates
 
 // Function to check and install missing NewModules
@@ -184,7 +185,7 @@ const ValidEmailAddressTo = getValidEmail();
 
 // If the email is invalid, stop further execution
 if (ValidEmailAddressTo === '' && EmailAlert === 'on') {
-    logError("DX-Alert: No valid email address found. DX ALERT not started.");
+    logError("DX-Alert No valid email address found. DX ALERT not started.");
     process.exit(1); // Exit the script with a failure code
 }
 
@@ -252,58 +253,67 @@ async function handleTextSocketMessage(event) {
 
             const now = Date.now();
             const elapsedMinutes = Math.floor((now - lastAlertTime) / 60000);
-			const subject = `DX Alert: ${ServerName} received ${station}[${itu}] from ${distance} km away!!! `;
-            let message = `${ServerName} received station ${station} on ${frequency} MHz with PI: ${picode} from ${city} in [${itu}] which is ${distance} km away. `;
-				
-			if (Scanner_URL_PORT !== '') {
-				const currentDate = new Date().toISOString().slice(0, 10); // Current date in 'YYYY-MM-DD' format
-				const previousDate = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().slice(0, 10); // Previous date in 'YYYY-MM-DD' format
-
-				// Construct filenames for current and previous dates
-				const fileNameCurrent = `SCANNER_${currentDate}_filtered.html`;
-				const fileNamePrevious = `SCANNER_${previousDate}_filtered.html`;
-
-				// Construct URLs for both current and previous date files
-				const fileURLCurrent = `${Scanner_URL_PORT}/logs/${fileNameCurrent}`;
-				const fileURLPrevious = `${Scanner_URL_PORT}/logs/${fileNamePrevious}`;
-
-				try {
-				// Make both requests simultaneously
-				const [responseCurrent, responsePrevious] = await Promise.all([
-					fetch(fileURLCurrent, { method: 'HEAD' }),
-					fetch(fileURLPrevious, { method: 'HEAD' })
-				]);
-
-				// Check if either file exists
-				if (responseCurrent.ok) {
-					message += `\n\nLogfile: ${fileURLCurrent}`;
-					} else if (responsePrevious.ok) {
-						message += `\n\nLogfile: ${fileURLPrevious}`;
-					} else {
-						message += `\n\nLogfile not available for current or previous date.`;
-					}
-				} catch (error) {
-					logError("DX-Alert: Error checking file availability:", error);
-				}
-			}
-
-            if (shouldSendAlert(elapsedMinutes, message)) {
+			
+			const subject = `DX Alert ${ServerName} received ${station}[${itu}] from ${distance} km away!!! `;
+			let message = `${ServerName} received station ${station} on ${frequency} MHz with PI: ${picode} from ${city} in [${itu}] which is ${distance} km away. `;
+		
+			if (shouldSendAlert(elapsedMinutes, message)) {
                 processingAlert = true;
-                if (EmailAlert === 'on') {
-                    sendEmail(subject, message);
-                }
-                if (TelegramAlert === 'on') {
-                    sendTelegram(subject, message);
-                }
-                logInfo(subject);
-                lastAlertTime = now;
-                lastAlertMessage = message;
+				
+				if (Scanner_URL_PORT !== '') {
+					const currentDate = new Date().toISOString().slice(0, 10); // Current date in 'YYYY-MM-DD' format
+					const previousDate = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().slice(0, 10); // Previous date in 'YYYY-MM-DD' format
 
-                setTimeout(() => processingAlert = false, 1000); // Reset processing flag after delay
+					// Construct filenames for current and previous dates
+					const fileNameCurrent = `SCANNER_${currentDate}_filtered.html`;
+					const fileNamePrevious = `SCANNER_${previousDate}_filtered.html`;
+
+					// Construct URLs for both current and previous date files
+					const fileURLCurrent = `${Scanner_URL_PORT}/logs/${fileNameCurrent}`;
+					const fileURLPrevious = `${Scanner_URL_PORT}/logs/${fileNamePrevious}`;
+
+					try {
+					// Make both requests simultaneously
+					const [responseCurrent, responsePrevious] = await Promise.all([
+						fetch(fileURLCurrent, { method: 'HEAD' }),
+						fetch(fileURLPrevious, { method: 'HEAD' })
+					]);
+					
+					message_link = message;
+
+					// Check if either file exists
+					if (responseCurrent.ok) {
+						logDebug(`DX-Alert Logfile: ${fileURLCurrent}`);
+					message_link = message + "\n\nLogfile: " + fileURLCurrent;
+						} else if (responsePrevious.ok) {
+							message_link = message + "\n\nLogfile: " + fileURLPrevious;
+							logDebug(`DX-Alert Logfile: ${fileURLPrevious}`);
+						} else {
+							message_link = message + `\n\nLogfile not available for current or previous date.`;
+							logDebug(`DX-Alert Logfile not available for current or previous date`);
+						}
+					} catch (error) {
+						logError("DX-Alert Error checking file availability:", error);
+					}
+
+				
+					if (EmailAlert === 'on') {
+						sendEmail(subject, message_link);
+					}
+					if (TelegramAlert === 'on') {
+						sendTelegram(subject, message_link);
+					}
+					logInfo(subject);
+					lastAlertTime = now;
+					lastAlertMessage = message;
+
+					setTimeout(() => processingAlert = false, 1000); // Reset processing flag after delay
+				
+				}
             }
         }
     } catch (error) {
-        logError("DX-Alert: Error handling TextSocket message:", error);
+        logError("DX-Alert Error handling TextSocket message:", error);
     }
 }
 
@@ -399,10 +409,10 @@ function sendWebSocketNotification(status, subject, message, source) {
         try {
             extraWs.send(JSON.stringify(notification));
         } catch (error) {
-            logError("DX-Alert: Error sending WebSocket notification:", error);
+            logError("DX-Alert Error sending WebSocket notification:", error);
         }
     } else {
-        logError("DX-Alert: Extra WebSocket is not open or not defined.");
+        logError("DX-Alert Extra WebSocket is not open or not defined.");
     }
 }
 
@@ -427,7 +437,7 @@ function connectToWebSocket() {
 
     ws.on('message', (data) => handleWebSocketMessage(data, ws));
 
-    ws.on('error', (error) => logError('DX-Alert: WebSocket error:', error));
+    ws.on('error', (error) => logError('DX-Alert WebSocket error:', error));
 
     ws.on('close', (code, reason) => {
         logInfo(`WebSocket connection closed. Code: ${code}, Reason: ${reason}`);
@@ -462,7 +472,7 @@ function handleWebSocketMessage(data, ws) {
             handleDXAlertMessage(message, ws);
         }
     } catch (error) {
-        logError('DX-Alert: Error processing WebSocket message:', error);
+        logError('DX-Alert Error processing WebSocket message:', error);
     }
 }
 
@@ -511,7 +521,7 @@ function setupExtraWebSocket() {
         logInfo("DX-Alert Extra WebSocket connected.");
     });
 
-    extraWs.on('error', (error) => logError("DX-Alert: Extra WebSocket error:", error));
+    extraWs.on('error', (error) => logError("DX-Alert Extra WebSocket error:", error));
 
     extraWs.on('close', (event) => {
         logInfo("Extra WebSocket closed:", event);
