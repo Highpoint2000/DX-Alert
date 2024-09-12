@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.1a)      ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.2)       ///
 ///                                                          ///
-///  by Highpoint                last update: 11.09.24       ///
+///  by Highpoint                last update: 12.09.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -10,10 +10,10 @@
 ///                                                          ///
 ////////////////////////////////////////////////////////////////
 
-///  This plugin only works from web server version 1.2.6!!!
+///  This plugin only works from web server version 1.2.8!!!
 
 (() => {
-    const plugin_version = 'V3.1a';
+    const plugin_version = 'V3.2';
     let AlertActive = false;
     let wsSendSocket;
     let pressTimer;
@@ -61,10 +61,12 @@
                 wsSendSocket.addEventListener("error", (error) => console.error("Send WebSocket error:", error));
                 wsSendSocket.addEventListener("close", (event) => {
                     console.log("Send WebSocket closed:", event);
+					sendToast('error important', 'DX-Alert', `Send WebSocket closed`, false, false);	
                     setTimeout(setupSendSocket, 5000); // Reconnect after 5 seconds
                 });
             } catch (error) {
                 console.error("Failed to setup Send WebSocket:", error);
+				sendToast('error important', 'DX-Alert', `Failed to setup Send WebSocket`, false, false);	
                 setTimeout(setupSendSocket, 5000); // Reconnect after 5 seconds
             }
         }
@@ -87,16 +89,16 @@
                     case 'success':
                         if (eventData.target === sessionId) {
 							if (EmailAlert === 'on' && TelegramAlert === 'on') {
-								showCustomAlert(`Test email request sent to ${ValidEmailAddress} and Telegram successfully!!!`);	
+								sendToast('success important', 'DX-Alert', `Test email request sent to ${ValidEmailAddress} and Telegram successfully!!!`, false, false);
 								console.log("Server response: Test email request sent to ${ValidEmailAddress} and Telegram successfully.");								
 							} else if (EmailAlert === 'on') {
-								showCustomAlert(`Test email request sent to ${ValidEmailAddress} successfully!!!`);	
+								sendToast('success important', 'DX-Alert', `Test email request sent to ${ValidEmailAddress} successfully!!!`, false, false);
 								console.log("Server response: Test email request sent to ${ValidEmailAddress} successfully.");	
 								} else if (TelegramAlert === 'on') {
-									showCustomAlert(`Test email request sent to Telegram successfully!!!`);	
-									console.log("Server response: Test email request sent to Telegram successfully.");	
+									sendToast('success important', 'DX-Alert', `Test notification request sent to Telegram successfully!!!`, false, false);
+									console.log("Server response: Test email request sent to Telegram successfully.");
 									} else {
-										showCustomAlert(`Error: No services are configured!`);	
+										sendToast('error', 'DX-Alert', `no services are configured!`, false, false);	
 									}
 						}
                         break;
@@ -104,32 +106,32 @@
 						if (EmailAlert === 'on' && TelegramAlert === 'on') {					
 							console.log(`DX-Alert!!! ${message} > Sent Telegram Message and email to ${email}`);
 							if (isTuneAuthenticated) {
-								showCustomAlert(`DX-Alert!!! ${message} > Sent Telegram Message and email to ${email}`);
+								sendToast('success important', 'DX-Alert', `${message} > Sent Telegram Message and email to ${email}`, false, false);
 								}
 							} else if (EmailAlert === 'on') {
 								console.log(`DX-Alert!!! ${message} > Email sent to ${email}`);
 								if (isTuneAuthenticated) {
-									showCustomAlert(`DX-Alert!!! ${message} > Email sent to ${email}`);
+									sendToast('success important', 'DX-Alert', `${message} > Email sent to ${email}`, false, false);
 									}
 								} else if (TelegramAlert === 'on') {
 									console.log(`DX-Alert!!! ${message} > Sent Telegram Message`);
 									if (isTuneAuthenticated) {
-										showCustomAlert(`DX-Alert!!! ${message} > Sent Telegram Message`);
+										sendToast('success important', 'DX-Alert', `${message} > Sent Telegram Message`, false, false);
 										}
 									} else {
-										showCustomAlert(`Error: No services are configured!`);	
+										sendToast('error', 'DX-Alert', `no services are configured!`, false, false);	
 									}
                     break;
                     case 'error':
 						if (EmailAlert === 'on') {
 							console.error("Server response: Test email request failed.", message);
-						    showCustomAlert(`Error! Failed to send test email to ${ValidEmailAddress}!`);							
+							sendToast('error', 'DX-Alert', `Error! Failed to send test email to ${ValidEmailAddress}!`, false, false);							
 						} else if (TelegramAlert === 'on') {
 							console.error("Server response: Telegram Test request failed.", message);
-						    showCustomAlert(`Error! Failed to send test to Telegram!`);
+							sendToast('error', 'DX-Alert', `failed to send test to Telegram!`, false, false);
 							} else if (EmailAlert === 'on' && TelegramAlert === 'on') {
 								console.error("Server response: Telegram or email Test request failed.", message);
-								showCustomAlert(`Error! Failed to send test to ${ValidEmailAddress} or to Telegram!`);
+								sendToast('error', 'DX-Alert', `failed to send test to ${ValidEmailAddress} or to Telegram!`, false, false);	
 							}
                         break;
                     case 'on':
@@ -146,22 +148,17 @@
 							if (EmailAlert === 'on' && TelegramAlert === 'on') {
 								const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)` : '';
 								console.log(`${alertStatusMessage}${alertDetailsMessage}`);
-								showCustomAlert(`DX ALERT activated for Telegram & ${ValidEmailAddress}\n(Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)`);
+								sendToast('info', 'DX-Alert', `activated for Telegram & ${ValidEmailAddress}\n(Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)`, false, false);	
 								} else if (EmailAlert === 'on') {
 									const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)` : '';
 									console.log(`${alertStatusMessage}${alertDetailsMessage}`);
-									showCustomAlert(`DX ALERT activated for ${ValidEmailAddress}\n(Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)`);
+									sendToast('info', 'DX-Alert', `activated for ${ValidEmailAddress}\n(Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)`, false, false);
 									} else if (TelegramAlert === 'on') {
 										const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)` : '';
 										console.log(`${alertStatusMessage}${alertDetailsMessage}`);
-										showCustomAlert(`DX ALERT activated for Telegram\n(Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)`);
+										sendToast('info', 'DX-Alert', `activated for Telegram\n(Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)`, false, false);
 									}
-                        } else {
-							if (isTuneAuthenticated) {
-								console.log(`DX ALERT deactivated`);
-								showCustomAlert(`DX ALERT deactivated`);
-							}
-						}
+                        } 
                         break;
                 }
 
@@ -173,7 +170,7 @@
             }
             checkSuccessTimer = setTimeout(() => {
                 if (!ValidEmailAddress) {
-                    showCustomAlert('DX-Alert Server Error!');
+					sendToast('error', 'DX-Alert', 'Server Error!', false, false);				
                 }
             }, 500);
         
@@ -235,7 +232,6 @@
             AlertButton.style.borderRadius = '0px';
             AlertButton.title = `Plugin Version: ${plugin_version}`;
             buttonWrapper.appendChild(AlertButton);
-            AlertButton.addEventListener('click', handleAlertButtonClick);
             AlertButton.addEventListener('mousedown', startPressTimer);
             AlertButton.addEventListener('mouseup', cancelPressTimer);
             AlertButton.addEventListener('mouseleave', cancelPressTimer);
@@ -276,6 +272,12 @@
         clearTimeout(pressTimer);
         if (buttonPressStarted) {
             toggleAlert();
+			if (isTuneAuthenticated) {
+				if (!AlertActive) {
+					console.log(`DX ALERT deactivated`);
+					sendToast('info', 'DX-Alert', 'Plugin deactivated', false, false);
+				}
+			}
         }
         buttonPressStarted = null;
     }
@@ -283,11 +285,11 @@
     // Function to send a test email
     async function sendTestEmail() {
         if (!isTuneAuthenticated) {
-            showCustomAlert("You must be authenticated to use the DX ALERT feature.");
+            sendToast('warning', 'DX-Alert', 'You must be authenticated as admin to use the DX ALERT feature!', false, false);
             return;
         }
         if (!ValidEmailAddress) {
-            showCustomAlert("Valid email address not set on the webserver or in the dx-alert server script!");
+			sendToast('warning', 'DX-Alert', 'Valid email address not set on the webserver or in the dx-alert server script!', false, false)
             return;
         }
 
@@ -309,71 +311,24 @@
 
             if (wsSendSocket && wsSendSocket.readyState === WebSocket.OPEN) {
                 wsSendSocket.send(message);
-                showCustomAlert('Test requested, please wait!');
+				sendToast('info', 'DX-Alert', 'Test requested, please wait!', false, false);
+				
             } else {
                 console.error('WebSocket connection is not open.');
-                showCustomAlert('WebSocket connection is not open.');
+				sendToast('error', 'DX-Alert', 'WebSocket connection is not open.', false, false);
             }
         } catch (error) {
             console.error('Failed to send test email via WebSocket:', error);
-            showCustomAlert('Error! Failed to send test email to ${ValidEmailAddress}!');
+			sendToast('error', 'DX-Alert', 'Error! Failed to send test email to ${ValidEmailAddress}!', false, false);
         }
-    }
-
-    // Function to show a custom alert notification
-    function showCustomAlert(message) {
-        // Create the notification element
-        const notification = document.createElement('div');
-        notification.textContent = message;
-        notification.style.position = 'fixed';
-        notification.style.top = '20px';  // Adjust the top position as needed
-        notification.style.left = '50%';  // Center horizontally
-        notification.style.transform = 'translateX(-50%)';  // Adjust for exact center alignment
-        notification.style.padding = '15px 30px';  // Larger padding for bigger notification
-        notification.style.borderRadius = '8px';  // Slightly rounded corners
-        notification.style.zIndex = '1000';
-        notification.style.opacity = '1';
-        notification.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
-        notification.style.fontSize = '16px';  // Larger font size
-        notification.style.fontWeight = 'bold'; // Optional: make the text bold
-        notification.style.textAlign = 'center'; // Center the text
-        notification.style.color = '#fff';  // Set text color to white for other messages
-
-        // Conditionally set the background color based on message content
-        if (message.toLowerCase().includes('error')) {
-            notification.style.backgroundColor = '#FF0000';  // Red for errors
-        } else if (message.toLowerCase().includes('!!!')) {
-			notification.style.backgroundColor = '#008000';  // Green for email alerts
-		} else {		
-            notification.style.backgroundColor = '#333';  // Dark gray for other messages
-        }
-
-        // Append the notification to the body
-        document.body.appendChild(notification);
-
-        // Remove the notification after 4 seconds
-        setTimeout(() => {
-            notification.style.opacity = '0';
-            notification.style.transform = 'translateX(-50%) translateY(-20px)';  // Optional: slide up effect
-            setTimeout(() => document.body.removeChild(notification), 500); // Remove the element after fade-out
-        }, 4000);
-    }
-
-    // Handle click on the alert button (currently no status change)
-    async function handleAlertButtonClick() {
-        if (!isTuneAuthenticated) {
-            showCustomAlert("You must be authenticated as admin to use the DX ALERT feature.");
-            return;
-        }
-        // No status change on click; handled by press timer
     }
 
     // Toggle alert status and update WebSocket
     async function toggleAlert() {
         if (!isTuneAuthenticated) {
-            showCustomAlert("You must be authenticated as admin to use the DX ALERT feature.");
-            return;
-        }
+            sendToast('warning', 'DX-Alert', 'You must be authenticated as admin to use the DX ALERT feature!', false, false);
+			return;
+		}
 
         AlertActive = !AlertActive;
 
