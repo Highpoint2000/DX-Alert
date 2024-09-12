@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.1a)      ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.2)       ///
 ///                                                          ///
-///  by Highpoint                last update: 11.09.24       ///
+///  by Highpoint                last update: 12.09.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -10,7 +10,7 @@
 ///                                                          ///
 ////////////////////////////////////////////////////////////////
 
-///  This plugin only works from web server version 1.2.6!!!
+///  This plugin only works from web server version 1.2.8!!!
 
 const path = require('path');
 const fs = require('fs');
