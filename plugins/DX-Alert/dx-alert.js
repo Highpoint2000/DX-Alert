@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.2)       ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.2a)      ///
 ///                                                          ///
-///  by Highpoint                last update: 12.09.24       ///
+///  by Highpoint                last update: 13.09.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -10,10 +10,10 @@
 ///                                                          ///
 ////////////////////////////////////////////////////////////////
 
-///  This plugin only works from web server version 1.2.8!!!
+///  This plugin only works from web server version 1.2.8.1!!!
 
 (() => {
-    const plugin_version = 'V3.2';
+    const plugin_version = 'V3.2a';
     let AlertActive = false;
     let wsSendSocket;
     let pressTimer;
@@ -37,7 +37,7 @@
         margin-top: 0px;
     `;
 	
-    // Extract WebserverURL and WebserverPORT from the current page URL
+    // data_pluginsct WebserverURL and WebserverPORT from the current page URL
     const currentURL = new URL(window.location.href);
     const WebserverURL = currentURL.hostname;
     const WebserverPath = currentURL.pathname.replace(/setup/g, '');
@@ -46,7 +46,7 @@
     // Determine WebSocket protocol and port
     const protocol = currentURL.protocol === 'https:' ? 'wss:' : 'ws:'; // Determine WebSocket protocol
     const WebsocketPORT = WebserverPORT; // Use the same port as HTTP/HTTPS
-    const WEBSOCKET_URL = `${protocol}//${WebserverURL}:${WebsocketPORT}${WebserverPath}extra`; // WebSocket URL with /extra
+    const WEBSOCKET_URL = `${protocol}//${WebserverURL}:${WebsocketPORT}${WebserverPath}data_plugins`; // WebSocket URL with /data_plugins
 
     // Function to set up WebSocket connection for sending messages
     async function setupSendSocket() {
