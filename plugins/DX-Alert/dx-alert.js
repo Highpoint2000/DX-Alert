@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.2a)      ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.2b BETA) ///
 ///                                                          ///
 ///  by Highpoint                last update: 13.09.24       ///
 ///                                                          ///
@@ -13,7 +13,7 @@
 ///  This plugin only works from web server version 1.2.8.1!!!
 
 (() => {
-    const plugin_version = 'V3.2a';
+    const plugin_version = 'V3.2b BETA';
     let AlertActive = false;
     let wsSendSocket;
     let pressTimer;
@@ -21,6 +21,7 @@
     let ValidEmailAddress = null; // Email address for alerts
     let NewEmailFrequency = null;
     let AlertDistance = null;
+	let EmailAlert;
 
     // Generate a random 12-digit session ID to replace the IP address
     let sessionId = Math.floor(Math.random() * 1e12).toString().padStart(12, '0'); // Generates a 12-digit random session ID
@@ -168,11 +169,6 @@
             if (checkSuccessTimer) {
                 clearTimeout(checkSuccessTimer);
             }
-            checkSuccessTimer = setTimeout(() => {
-                if (!ValidEmailAddress) {
-					sendToast('error', 'DX-Alert', 'Server Error!', false, false);				
-                }
-            }, 500);
         
         } catch (error) {
             console.error("Error handling WebSocket message:", error);
@@ -282,46 +278,50 @@
         buttonPressStarted = null;
     }
 	
-    // Function to send a test email
-    async function sendTestEmail() {
-        if (!isTuneAuthenticated) {
-            sendToast('warning', 'DX-Alert', 'You must be authenticated as admin to use the DX ALERT feature!', false, false);
-            return;
-        }
-        if (!ValidEmailAddress) {
-			sendToast('warning', 'DX-Alert', 'Valid email address not set on the webserver or in the dx-alert server script!', false, false)
-            return;
-        }
-
-        const testMessage = `This is a test for DX ALERT. The current alert status is ${AlertActive ? 'Active' : 'Inactive'}.`;
-		const testSubject = "DX ALERT Test";
-		
-        try {
-            const message = JSON.stringify({
-                type: 'DX-Alert',
-                value: {
-                    status: 'test',
-                    email: ValidEmailAddress,
-                    subject: testSubject,
-                    message: testMessage,
-                },
-                source: sessionId,
-                target: 'Server'
-            });
-
-            if (wsSendSocket && wsSendSocket.readyState === WebSocket.OPEN) {
-                wsSendSocket.send(message);
-				sendToast('info', 'DX-Alert', 'Test requested, please wait!', false, false);
-				
-            } else {
-                console.error('WebSocket connection is not open.');
-				sendToast('error', 'DX-Alert', 'WebSocket connection is not open.', false, false);
-            }
-        } catch (error) {
-            console.error('Failed to send test email via WebSocket:', error);
-			sendToast('error', 'DX-Alert', 'Error! Failed to send test email to ${ValidEmailAddress}!', false, false);
-        }
+    // Funktion zum Senden einer Test-E-Mail
+async function sendTestEmail() {
+    if (!isTuneAuthenticated) {
+        sendToast('warning', 'DX-Alert', 'You must be authenticated as admin to use the DX ALERT feature!', false, false);
+        return;
     }
+    if (!ValidEmailAddress && EmailAlert === 'on') {
+        sendToast('warning', 'DX-Alert', 'Valid email address not set on the webserver or in the dx-alert config script!', false, false);
+        return;
+    }
+
+    const testMessage = `This is a test for DX ALERT. The current alert status is ${AlertActive ? 'Active' : 'Inactive'}.`;
+    const testSubject = "DX ALERT Test";
+
+    console.log('DX ALERT Test initiated.');
+
+    try {
+        const message = JSON.stringify({
+            type: 'DX-Alert',
+            value: {
+                status: 'test',
+                email: ValidEmailAddress,
+                subject: testSubject,
+                message: testMessage,
+            },
+            source: sessionId,
+            target: 'Server'
+        });
+
+        if (wsSendSocket && wsSendSocket.readyState === WebSocket.OPEN) {
+            wsSendSocket.send(message);
+            sendToast('info', 'DX-Alert', 'Test requested, please wait!', false, false);
+            console.log('DX ALERT test message sent via WebSocket.');
+        } else {
+            console.error('WebSocket connection is not open.');
+            sendToast('error', 'DX-Alert', 'WebSocket connection is not open.', false, false);
+        }
+    } catch (error) {
+        console.error('Failed to send test email via WebSocket:', error);
+        // Korrektur: Verwendung von Template-Literalen
+        sendToast('error', 'DX-Alert', `Error! Failed to send test email to ${ValidEmailAddress}!`, false, false);
+    }
+}
+
 
     // Toggle alert status and update WebSocket
     async function toggleAlert() {
