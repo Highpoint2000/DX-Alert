@@ -5,7 +5,7 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 ![image](https://github.com/user-attachments/assets/7683433d-d55a-47b4-bee3-46c9c57da509)
 
 
-## Version 3.2 (only works from web server version 1.2.8.1 !!!)
+## Version 3.2a (only works from web server version 1.2.8.1 !!!)
 
 - Adaptation of the web socket /extra to /data_plugins, index.js update is no longer needed from now on!
 
