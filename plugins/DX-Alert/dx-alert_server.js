@@ -260,6 +260,8 @@ async function handleTextSocketMessage(event) {
 			if (shouldSendAlert(elapsedMinutes, message)) {
                 processingAlert = true;
 				
+				message_link = message;
+				
 				if (Scanner_URL_PORT !== '') {
 					const currentDate = new Date().toISOString().slice(0, 10); // Current date in 'YYYY-MM-DD' format
 					const previousDate = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().slice(0, 10); // Previous date in 'YYYY-MM-DD' format
@@ -277,9 +279,7 @@ async function handleTextSocketMessage(event) {
 					const [responseCurrent, responsePrevious] = await Promise.all([
 						fetch(fileURLCurrent, { method: 'HEAD' }),
 						fetch(fileURLPrevious, { method: 'HEAD' })
-					]);
-					
-					message_link = message;
+					]);			
 
 					// Check if either file exists
 					if (responseCurrent.ok) {
@@ -295,21 +295,20 @@ async function handleTextSocketMessage(event) {
 					} catch (error) {
 						logError("DX-Alert Error checking file availability:", error);
 					}
-
-				
-					if (EmailAlert === 'on') {
-						sendEmail(subject, message_link);
-					}
-					if (TelegramAlert === 'on') {
-						sendTelegram(subject, message_link);
-					}
-					logInfo(subject);
-					lastAlertTime = now;
-					lastAlertMessage = message;
-
-					setTimeout(() => processingAlert = false, 1000); // Reset processing flag after delay
-				
 				}
+
+				if (EmailAlert === 'on') {
+					sendEmail(subject, message_link);
+				}
+				if (TelegramAlert === 'on') {
+					sendTelegram(subject, message_link);
+				}
+				logInfo(subject);
+				lastAlertTime = now;
+				lastAlertMessage = message;
+
+				setTimeout(() => processingAlert = false, 1000); // Reset processing flag after delay
+				
             }
         }
     } catch (error) {
