@@ -236,6 +236,7 @@ async function setupTextSocket() {
 
 // Handle incoming WebSocket messages
 let processingAlert = false;
+let firstAlert = true;
 
 async function handleTextSocketMessage(event) {
     try {
@@ -253,62 +254,63 @@ async function handleTextSocketMessage(event) {
 
             const now = Date.now();
             const elapsedMinutes = Math.floor((now - lastAlertTime) / 60000);
-			
-			const subject = `DX Alert ${ServerName} received ${station}[${itu}] from ${distance} km away!!! `;
-			let message = `${ServerName} received station ${station} on ${frequency} MHz with PI: ${picode} from ${city} in [${itu}] which is ${distance} km away. `;
-		
-			if (shouldSendAlert(elapsedMinutes, message)) {
+
+            const subject = `DX Alert ${ServerName} received ${station}[${itu}] from ${distance} km away!!! `;
+            let message = `${ServerName} received station ${station} on ${frequency} MHz with PI: ${picode} from ${city} in [${itu}] which is ${distance} km away. `;
+
+            // Send the alert immediately on the first occurrence, then respect the time interval for subsequent alerts
+            if (firstAlert || shouldSendAlert(elapsedMinutes, message)) {
                 processingAlert = true;
-				
-				message_link = message;
-				
-				if (Scanner_URL_PORT !== '') {
-					const currentDate = new Date().toISOString().slice(0, 10); // Current date in 'YYYY-MM-DD' format
-					const previousDate = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().slice(0, 10); // Previous date in 'YYYY-MM-DD' format
+                firstAlert = false; // Set the flag to false after the first alert is sent
 
-					// Construct filenames for current and previous dates
-					const fileNameCurrent = `SCANNER_${currentDate}_filtered.html`;
-					const fileNamePrevious = `SCANNER_${previousDate}_filtered.html`;
+                message_link = message;
 
-					// Construct URLs for both current and previous date files
-					const fileURLCurrent = `${Scanner_URL_PORT}/logs/${fileNameCurrent}`;
-					const fileURLPrevious = `${Scanner_URL_PORT}/logs/${fileNamePrevious}`;
+                if (Scanner_URL_PORT !== '') {
+                    const currentDate = new Date().toISOString().slice(0, 10); // Current date in 'YYYY-MM-DD' format
+                    const previousDate = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().slice(0, 10); // Previous date in 'YYYY-MM-DD' format
 
-					try {
-					// Make both requests simultaneously
-					const [responseCurrent, responsePrevious] = await Promise.all([
-						fetch(fileURLCurrent, { method: 'HEAD' }),
-						fetch(fileURLPrevious, { method: 'HEAD' })
-					]);			
+                    // Construct filenames for current and previous dates
+                    const fileNameCurrent = `SCANNER_${currentDate}_filtered.html`;
+                    const fileNamePrevious = `SCANNER_${previousDate}_filtered.html`;
 
-					// Check if either file exists
-					if (responseCurrent.ok) {
-						logDebug(`DX-Alert Logfile: ${fileURLCurrent}`);
-					message_link = message + "\n\nLogfile: " + fileURLCurrent;
-						} else if (responsePrevious.ok) {
-							message_link = message + "\n\nLogfile: " + fileURLPrevious;
-							logDebug(`DX-Alert Logfile: ${fileURLPrevious}`);
-						} else {
-							message_link = message + `\n\nLogfile not available for current or previous date.`;
-							logDebug(`DX-Alert Logfile not available for current or previous date`);
-						}
-					} catch (error) {
-						logError("DX-Alert Error checking file availability:", error);
-					}
-				}
+                    // Construct URLs for both current and previous date files
+                    const fileURLCurrent = `${Scanner_URL_PORT}/logs/${fileNameCurrent}`;
+                    const fileURLPrevious = `${Scanner_URL_PORT}/logs/${fileNamePrevious}`;
 
-				if (EmailAlert === 'on') {
-					sendEmail(subject, message_link);
-				}
-				if (TelegramAlert === 'on') {
-					sendTelegram(subject, message_link);
-				}
-				logInfo(subject);
-				lastAlertTime = now;
-				lastAlertMessage = message;
+                    try {
+                        // Make both requests simultaneously
+                        const [responseCurrent, responsePrevious] = await Promise.all([
+                            fetch(fileURLCurrent, { method: 'HEAD' }),
+                            fetch(fileURLPrevious, { method: 'HEAD' })
+                        ]);
 
-				setTimeout(() => processingAlert = false, 1000); // Reset processing flag after delay
-				
+                        // Check if either file exists
+                        if (responseCurrent.ok) {
+                            logDebug(`DX-Alert Logfile: ${fileURLCurrent}`);
+                            message_link = message + "\n\nLogfile: " + fileURLCurrent;
+                        } else if (responsePrevious.ok) {
+                            message_link = message + "\n\nLogfile: " + fileURLPrevious;
+                            logDebug(`DX-Alert Logfile: ${fileURLPrevious}`);
+                        } else {
+                            message_link = message + `\n\nLogfile not available for current or previous date.`;
+                            logDebug(`DX-Alert Logfile not available for current or previous date`);
+                        }
+                    } catch (error) {
+                        logError("DX-Alert Error checking file availability:", error);
+                    }
+                }
+
+                if (EmailAlert === 'on') {
+                    sendEmail(subject, message_link);
+                }
+                if (TelegramAlert === 'on') {
+                    sendTelegram(subject, message_link);
+                }
+                logInfo(subject);
+                lastAlertTime = now;
+                lastAlertMessage = message;
+
+                setTimeout(() => processingAlert = false, 1000); // Reset processing flag after delay
             }
         }
     } catch (error) {
