@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.2a)      ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.2b BETA) ///
 ///                                                          ///
-///  by Highpoint                last update: 12.09.24       ///
+///  by Highpoint                last update: 13.09.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -186,7 +186,7 @@ const ValidEmailAddressTo = getValidEmail();
 // If the email is invalid, stop further execution
 if (ValidEmailAddressTo === '' && EmailAlert === 'on') {
     logError("DX-Alert No valid email address found. DX ALERT not started.");
-    process.exit(1); // Exit the script with a failure code
+    return; // Exit the script with a failure code
 }
 
 // Create a status message object
