@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.2)       ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.2a)      ///
 ///                                                          ///
 ///  by Highpoint                last update: 12.09.24       ///
 ///                                                          ///
@@ -10,7 +10,7 @@
 ///                                                          ///
 ////////////////////////////////////////////////////////////////
 
-///  This plugin only works from web server version 1.2.8!!!
+///  This plugin only works from web server version 1.2.8.1!!!
 
 const path = require('path');
 const fs = require('fs');
@@ -392,7 +392,7 @@ function handleTelegramResponse(subject, message, source) {
 
 // Send a WebSocket notification
 function sendWebSocketNotification(status, subject, message, source) {
-    if (extraWs && extraWs.readyState === WebSocket.OPEN) {
+    if (data_pluginsWs && data_pluginsWs.readyState === WebSocket.OPEN) {
         const notification = {
             type: 'DX-Alert',
             value: {
@@ -407,12 +407,12 @@ function sendWebSocketNotification(status, subject, message, source) {
             target: source
         };
         try {
-            extraWs.send(JSON.stringify(notification));
+            data_pluginsWs.send(JSON.stringify(notification));
         } catch (error) {
             logError("DX-Alert Error sending WebSocket notification:", error);
         }
     } else {
-        logError("DX-Alert Extra WebSocket is not open or not defined.");
+        logError("DX-Alert data_plugins WebSocket is not open or not defined.");
     }
 }
 
@@ -423,7 +423,7 @@ function connectToWebSocket() {
         return;
     }
 
-    const ws = new WebSocket(externalWsUrl + '/extra');
+    const ws = new WebSocket(externalWsUrl + '/data_plugins');
 
     ws.on('open', () => {
         // logInfo(`DX-Alert connected to ${ws.url}`);
@@ -444,8 +444,8 @@ function connectToWebSocket() {
         setTimeout(connectToWebSocket, Math.min(5000 * 2 ** sentMessages.size, 30000)); // Exponential backoff
     });
 
-    // Setup extra WebSocket connection for additional features
-    setupExtraWebSocket();
+    // Setup data_plugins WebSocket connection for additional features
+    setupdata_pluginsWebSocket();
 }
 
 // Log broadcast information based on current status
@@ -513,19 +513,19 @@ function handleDXAlertMessage(message, ws) {
 			}
 }
 
-// Set up a separate connection for the /extra WebSocket endpoint
-function setupExtraWebSocket() {
-    extraWs = new WebSocket(`ws://127.0.0.1:${webserverPort}/extra`);
+// Set up a separate connection for the /data_plugins WebSocket endpoint
+function setupdata_pluginsWebSocket() {
+    data_pluginsWs = new WebSocket(`ws://127.0.0.1:${webserverPort}/data_plugins`);
 
-    extraWs.on('open', () => {
-        logInfo("DX-Alert Extra WebSocket connected.");
+    data_pluginsWs.on('open', () => {
+        logInfo("DX-Alert data_plugins WebSocket connected.");
     });
 
-    extraWs.on('error', (error) => logError("DX-Alert Extra WebSocket error:", error));
+    data_pluginsWs.on('error', (error) => logError("DX-Alert data_plugins WebSocket error:", error));
 
-    extraWs.on('close', (event) => {
-        logInfo("Extra WebSocket closed:", event);
-        setTimeout(setupExtraWebSocket, 5000); // Retry connection after 5 seconds
+    data_pluginsWs.on('close', (event) => {
+        logInfo("data_plugins WebSocket closed:", event);
+        setTimeout(setupdata_pluginsWebSocket, 5000); // Retry connection after 5 seconds
     });
 }
 
