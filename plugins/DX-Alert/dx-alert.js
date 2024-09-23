@@ -62,7 +62,6 @@
                 wsSendSocket.addEventListener("error", (error) => console.error("Send WebSocket error:", error));
                 wsSendSocket.addEventListener("close", (event) => {
                     console.log("Send WebSocket closed:", event);
-					// sendToast('error important', 'DX-Alert', `Send WebSocket closed`, false, false);	
                     setTimeout(setupSendSocket, 5000); // Reconnect after 5 seconds
                 });
             } catch (error) {
