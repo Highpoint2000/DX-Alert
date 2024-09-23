@@ -13,7 +13,7 @@
 ///  This plugin only works from web server version 1.2.8.1!!!
 
 (() => {
-    const plugin_version = 'V3.2b BETA';
+    const plugin_version = 'V3.2b';
     let AlertActive = false;
     let wsSendSocket;
     let pressTimer;
@@ -62,7 +62,7 @@
                 wsSendSocket.addEventListener("error", (error) => console.error("Send WebSocket error:", error));
                 wsSendSocket.addEventListener("close", (event) => {
                     console.log("Send WebSocket closed:", event);
-					sendToast('error important', 'DX-Alert', `Send WebSocket closed`, false, false);	
+					// sendToast('error important', 'DX-Alert', `Send WebSocket closed`, false, false);	
                     setTimeout(setupSendSocket, 5000); // Reconnect after 5 seconds
                 });
             } catch (error) {
