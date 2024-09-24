@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.3)      ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.3)       ///
 ///                                                          ///
 ///  by Highpoint                last update: 24.09.24       ///
 ///                                                          ///
@@ -17,7 +17,7 @@ const fs = require('fs');
 const { logInfo, logError, logDebug } = require('./../../server/console');
 
 // Define the path to the configuration file
-const configFilePath = path.join(__dirname, '('./../../plugins_configs/DX-Alert.json');
+const configFilePath = path.join(__dirname, './../../plugins_configs/DX-Alert.json');
 
 // Default values for the configuration file 
 // Do not enter this values !!! Save your configuration in configPlugin.json. This is created automatically when you first start.
@@ -54,10 +54,28 @@ function mergeConfig(defaultConfig, existingConfig) {
 // Function to load or create the configuration file
 function loadConfig(filePath) {
     let existingConfig = {};
+    const oldConfigPath = path.join(__dirname, 'configPlugin.json'); // Path to the old configuration file
 
-    // Check if the configuration file exists
-    if (fs.existsSync(filePath)) {
-        // Read the existing configuration file
+    // Ensure the directory exists before trying to write the new config file
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+
+    // Check if the old configuration file exists
+    if (fs.existsSync(oldConfigPath)) {
+        // Read the old configuration file
+        existingConfig = JSON.parse(fs.readFileSync(oldConfigPath, 'utf-8'));
+        logInfo('Old configuration found at configPlugin.json. Migrating to new file.');
+
+        // Save the old configuration under the new file path
+        fs.writeFileSync(filePath, JSON.stringify(existingConfig, null, 2), 'utf-8');
+        
+        // Delete the old configuration file
+        fs.unlinkSync(oldConfigPath);
+        logInfo('Old configuration file configPlugin.json deleted after migration.');
+    } else if (fs.existsSync(filePath)) {
+        // Read the existing DX-Alert.json configuration file if it already exists
         existingConfig = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
     } else {
         logInfo('DX-Alert configuration not found. Creating configPlugin.json.');
