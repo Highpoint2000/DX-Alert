@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.3)       ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.2c)      ///
 ///                                                          ///
 ///  by Highpoint                last update: 24.09.24       ///
 ///                                                          ///
