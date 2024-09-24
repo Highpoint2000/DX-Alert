@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.2b)      ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.3)      ///
 ///                                                          ///
-///  by Highpoint                last update: 23.09.24       ///
+///  by Highpoint                last update: 24.09.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -17,7 +17,7 @@ const fs = require('fs');
 const { logInfo, logError, logDebug } = require('./../../server/console');
 
 // Define the path to the configuration file
-const configFilePath = path.join(__dirname, 'configPlugin.json');
+const configFilePath = path.join(__dirname, '('./../../plugins_configs/DX-Alert.json');
 
 // Default values for the configuration file 
 // Do not enter this values !!! Save your configuration in configPlugin.json. This is created automatically when you first start.
