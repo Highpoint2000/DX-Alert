@@ -4,12 +4,9 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 
 ![image](https://github.com/user-attachments/assets/7683433d-d55a-47b4-bee3-46c9c57da509)
 
+### Version 3.3 (only works from web server version 1.2.8.1 !!!)
 
-## Version 3.2b (only works from web server version 1.2.8.1 !!!)
-
-- Bugfixing 
-- Deactivate the websocket error
-
+- Security hole closed (thanks to Ryan G 🇮🇪!)
 
 ## Installation notes:
 
@@ -57,6 +54,11 @@ Please note:
 - In the Netherlands and Germany there are already existing Telegram DX Alert groups ("NL FM DX Alerts" und "DE FM DX Alerts") that you can join and publish your logs. You can get further information and the tokens from me.
 
 ## History: 
+
+### Version 3.2b (only works from web server version 1.2.8.1 !!!)
+
+- Bugfixing 
+- Deactivate the websocket error
 
 ### Version 3.2a (only works from web server version 1.2.8.1 !!!)
 
