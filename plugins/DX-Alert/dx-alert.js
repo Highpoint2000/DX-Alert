@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.2b BETA) ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.2b)      ///
 ///                                                          ///
-///  by Highpoint                last update: 13.09.24       ///
+///  by Highpoint                last update: 24.09.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -22,6 +22,7 @@
     let NewEmailFrequency = null;
     let AlertDistance = null;
 	let EmailAlert;
+	let alertShown = false;
 
     // Generate a random 12-digit session ID to replace the IP address
     let sessionId = Math.floor(Math.random() * 1e12).toString().padStart(12, '0'); // Generates a 12-digit random session ID
@@ -135,20 +136,20 @@
 							}
                         break;
                     case 'on':
-                    case 'off':
-                        ValidEmailAddress = email;
-                        setButtonStatus(status === 'on');
-                        AlertActive = status === 'on';
-                        NewEmailFrequency = freq;
-                        AlertDistance = dist;
-                        setButtonStatus(AlertActive);
+					case 'off':
+						ValidEmailAddress = email;
+						setButtonStatus(status === 'on');
+						AlertActive = status === 'on';
+						NewEmailFrequency = freq;
+						AlertDistance = dist;
+						setButtonStatus(AlertActive);
 
-                        if (isTuneAuthenticated && status === 'on' && (eventData.target === '000000000000' || eventData.target === sessionId)) {
-                            const alertStatusMessage = `DX ALERT ${AlertActive ? 'activated' : 'deactivated'}`;
+						if (!alertShown && isTuneAuthenticated && status === 'on' && (eventData.target === '000000000000' || eventData.target === sessionId)) {
+							const alertStatusMessage = `DX ALERT ${AlertActive ? 'activated' : 'deactivated'}`;
 							if (EmailAlert === 'on' && TelegramAlert === 'on') {
 								const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)` : '';
 								console.log(`${alertStatusMessage}${alertDetailsMessage}`);
-								sendToast('info', 'DX-Alert', `activated for Telegram & ${ValidEmailAddress}\n(Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)`, false, false);	
+								sendToast('info', 'DX-Alert', `activated for Telegram & ${ValidEmailAddress}\n(Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)`, false, false);
 								} else if (EmailAlert === 'on') {
 									const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)` : '';
 									console.log(`${alertStatusMessage}${alertDetailsMessage}`);
@@ -158,8 +159,10 @@
 										console.log(`${alertStatusMessage}${alertDetailsMessage}`);
 										sendToast('info', 'DX-Alert', `activated for Telegram\n(Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)`, false, false);
 									}
-                        } 
-                        break;
+
+							alertShown = true;
+						}	 
+						break;
                 }
 
             }
