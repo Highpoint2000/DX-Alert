@@ -4,9 +4,9 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 
 ![image](https://github.com/user-attachments/assets/7683433d-d55a-47b4-bee3-46c9c57da509)
 
-### Version 3.2c (only works from web server version 1.2.8.1 !!!)
+### Version 3.3 (only works from web server version 1.2.8.1 !!!)
 
-- Security hole closed (thanks to Ryan G 🇮🇪!)
+- StationMode added to be able to trigger an alarm at a specified interval for each new logged DX station
 
 ## Installation notes:
 
@@ -25,9 +25,13 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 
 The following variables can be changed in the DX-Alert.json:
 
+    //// Alert Options ////
     Scanner_URL_PORT: '',			// OPTIONAL: External Webserver URL for Scanner Logfile Download (if plugin installed) e.g. 'http://fmdx.ddns.net:9080'
     AlertFrequency: 30, 			// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent 
     AlertDistance: 250, 			// Distance for DX alarms in km
+    StationMode: 'off',            // Enable Alarm for every new logged TX Station (default: 'off')
+    
+    //// Email Options ////
     EmailAlert: 'off', 			// Enable email alert feature, 'on' or 'off'
     EmailAddressTo: '', 			// Alternative email address for DX alerts, if the field remains empty, the email address of the web server will be used 
     EmailAddressFrom: '', 			// Sender email address, email address for account
@@ -35,6 +39,8 @@ The following variables can be changed in the DX-Alert.json:
     EmailHost: 'smtp.gmail.com', 	        // SMTP server for email, e.g. 'smtp.gmail.com' for GMAIL
     EmailPort: '587', 			// Port for email server, e.g. '587' for GMAIL
     EmailSecure: false, 			// Whether to use secure connection (true for port 465, false for other ports)
+    
+    //// Telegram Options ////
     TelegramAlert: 'off', 			// Telegram alert feature, 'on' or 'off'
     TelegramToken: '', 			// Telegram bot token
     TelegramChatId: '', 			// Telegram chat ID for sending alerts
@@ -54,6 +60,10 @@ Please note:
 - In the Netherlands and Germany there are already existing Telegram DX Alert groups ("NL FM DX Alerts" und "DE FM DX Alerts") that you can join and publish your logs. You can get further information and the tokens from me.
 
 ## History: 
+
+### Version 3.2c (only works from web server version 1.2.8.1 !!!)
+
+- Security hole closed (thanks to Ryan G 🇮🇪!)
 
 ### Version 3.2b (only works from web server version 1.2.8.1 !!!)
 
