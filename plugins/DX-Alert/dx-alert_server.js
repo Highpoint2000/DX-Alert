@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.2c)      ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.3)      ///
 ///                                                          ///
-///  by Highpoint                last update: 24.09.24       ///
+///  by Highpoint                last update: 25.10.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -14,7 +14,9 @@
 
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
 const { logInfo, logError, logDebug } = require('./../../server/console');
+const FmlistLogURL = 'http://127.0.0.1:4080/log_fmlist';
 
 // Define the path to the configuration file
 const configFilePath = path.join(__dirname, './../../plugins_configs/DX-Alert.json');
@@ -26,6 +28,7 @@ const defaultConfig = {
     Scanner_URL_PORT: '',			// OPTIONAL: External Webserver URL for Scanner Logfile Download (if plugin installed) e.g. 'http://fmdx.ddns.net:9080'
     AlertFrequency: 30, 			// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent 
     AlertDistance: 250, 			// Distance for DX alarms in km
+	StationMode: 'off',				// Enable Alarm for every new logged TX Station (default: 'off')
     EmailAlert: 'off', 				// Enable email alert feature, 'on' or 'off'
     EmailAddressTo: '', 			// Alternative email address for DX alerts, if the field remains empty, the email address of the web server will be used 
     EmailAddressFrom: '', 			// Sender email address, email address for account
@@ -35,7 +38,7 @@ const defaultConfig = {
     EmailSecure: false, 			// Whether to use secure connection (true for port 465, false for other ports)
     TelegramAlert: 'off', 			// Telegram alert feature, 'on' or 'off'
     TelegramToken: '', 				// Telegram bot token
-    TelegramChatId: '', 			// Telegram chat ID for sending alerts
+    TelegramChatId: '' 			// Telegram chat ID for sending alerts
 };
 
 // Function to merge default config with existing config and remove undefined values
@@ -95,8 +98,9 @@ const configPlugin = loadConfig(configFilePath);
 
 // Zugriff auf die Variablen
 const Scanner_URL_PORT = configPlugin.Scanner_URL_PORT;
-const AlertFrequency = configPlugin.AlertFrequency;
+  let AlertFrequency = configPlugin.AlertFrequency;
 const AlertDistance = configPlugin.AlertDistance;
+const StationMode = configPlugin.StationMode;
 
 const EmailAlert = configPlugin.EmailAlert;
 const EmailAddressTo = configPlugin.EmailAddressTo;
@@ -109,6 +113,7 @@ const EmailSecure = configPlugin.EmailSecure;
 const TelegramAlert = configPlugin.TelegramAlert;
 const TelegramToken = configPlugin.TelegramToken;
 const TelegramChatId = configPlugin.TelegramChatId;
+
 
 
 ////////////////////////////////////////////////////////////////
@@ -252,6 +257,22 @@ async function setupTextSocket() {
     }
 }
 
+const logHistory = {};
+
+// Funktion, um zu überprüfen, ob die ID in den letzten 60 Minuten protokolliert wurde
+function canLog(id) {
+    const now = Date.now();
+	if (AlertFrequency === '' || AlertFrequency === undefined) {
+		AlertFrequency = 60
+	}
+    const sixtyMinutes = 60 * AlertFrequency * 1000; // 60 Minuten in Millisekunden
+    if (logHistory[id] && (now - logHistory[id]) < sixtyMinutes) {
+        return false; // Protokollierung verweigern, wenn weniger als 60 Minuten vergangen sind
+    }
+    logHistory[id] = now; // Aktualisiere mit dem aktuellen Zeitstempel
+    return true;
+}
+
 // Handle incoming WebSocket messages
 let processingAlert = false;
 let firstAlert = true;
@@ -260,7 +281,7 @@ async function handleTextSocketMessage(event) {
     try {
         const eventData = JSON.parse(event.data);
         const { freq: frequency, pi: picode, txInfo } = eventData;
-        const { tx: station, city, itu, dist: distance } = txInfo || {};
+        const { tx: station, city, itu, id, dist: distance } = txInfo || {};
 
         if (currentStatus === 'off') {
             resetAlertStatus();
@@ -268,16 +289,16 @@ async function handleTextSocketMessage(event) {
         }
 
         if (currentStatus === 'on' && distance > AlertDistance) {
-            if (processingAlert) return;
-
+            if (processingAlert) return;					
+			
             const now = Date.now();
             const elapsedMinutes = Math.floor((now - lastAlertTime) / 60000);
 
             const subject = `DX Alert ${ServerName} received ${station}[${itu}] from ${distance} km away!!! `;
             let message = `${ServerName} received station ${station} on ${frequency} MHz with PI: ${picode} from ${city} in [${itu}] which is ${distance} km away. `;
-
-            // Send the alert immediately on the first occurrence, then respect the time interval for subsequent alerts
-            if (firstAlert || shouldSendAlert(elapsedMinutes, message)) {
+			
+			if ((canLog(id) && StationMode === 'on') || (StationMode === 'off' && (firstAlert || shouldSendAlert(elapsedMinutes, message)))) { // Send the alert immediately on the first occurrence, then respect the time interval for subsequent alerts
+					
                 processingAlert = true;
                 firstAlert = false; // Set the flag to false after the first alert is sent
 
@@ -329,7 +350,8 @@ async function handleTextSocketMessage(event) {
                 lastAlertMessage = message;
 
                 setTimeout(() => processingAlert = false, 1000); // Reset processing flag after delay
-            }
+			}
+           
         }
     } catch (error) {
         logError("DX-Alert Error handling TextSocket message:", error);
@@ -551,3 +573,6 @@ function setupdata_pluginsWebSocket() {
 // Initialize connections after a delay
 setTimeout(setupTextSocket, 1000);
 setTimeout(connectToWebSocket, 1000);
+if (StationMode === 'on') {
+	logInfo('DX-Alert station mode is active.');
+}
