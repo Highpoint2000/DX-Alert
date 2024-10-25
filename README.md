@@ -29,7 +29,7 @@ The following variables can be changed in the DX-Alert.json:
     Scanner_URL_PORT: '',			// OPTIONAL: External Webserver URL for Scanner Logfile Download (if plugin installed) e.g. 'http://fmdx.ddns.net:9080'
     AlertFrequency: 30, 			// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent 
     AlertDistance: 250, 			// Distance for DX alarms in km
-    StationMode: 'off',                    // Enable Alarm for every new logged TX Station (default: 'off')
+    StationMode: 'off',                     // Enable Alarm for every new logged TX Station (default: 'off')
     
     //// Email Options ////
     EmailAlert: 'off', 			// Enable email alert feature, 'on' or 'off'
