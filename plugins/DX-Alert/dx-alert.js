@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.2c)      ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.3)      ///
 ///                                                          ///
-///  by Highpoint                last update: 24.09.24       ///
+///  by Highpoint                last update: 25.10.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -13,7 +13,7 @@
 ///  This plugin only works from web server version 1.2.8.1!!!
 
 (() => {
-    const plugin_version = 'V3.2c';
+    const plugin_version = 'V3.3';
     let AlertActive = false;
     let wsSendSocket;
     let pressTimer;
