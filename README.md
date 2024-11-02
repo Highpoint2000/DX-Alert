@@ -6,7 +6,7 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 
 ## Version 3.4 (only works from web server version 1.2.8.1 and CanLogServer version 2.0 !!!)
 
-- added Support for CanLogServer (Version 2.0)
+- added Support for [CanLogServer](https://github.com/Highpoint2000/canlog-server) (Version 2.0)
 
 ## Installation notes:
 
