@@ -59,7 +59,7 @@ Please note:
 - The plugin does not log receptions. Only the first station found, above the entered kilometer limit and time interval, will be sent with detailed information as an indication of overreach!
 - If the alert button is active, you will also receive an email if another user of the web server receives DX stations while zapping
 - In the Netherlands and Germany there are already existing Telegram DX Alert groups ("NL FM DX Alerts" und "DE FM DX Alerts") that you can join and publish your logs. You can get further information and the tokens from me.
-- If there are several web servers, it makes sense to register the alarms that have already been sent via a central server in order to avoid duplicate alarms. The CanLogServer can provide this functionality. When using the server, the log interval set in DX-Alert.json is inactive because the log interval set for the server has priority!
+- If there are several web servers, it makes sense to register the alarms that have already been sent via a central server in order to avoid duplicate alarms. The [CanLogServer](https://github.com/Highpoint2000/canlog-server) can provide this functionality. When using the server, the log interval set in DX-Alert.json is inactive because the log interval set for the server has priority!
 
 ## History: 
 
