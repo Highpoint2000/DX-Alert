@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.3)      ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.4)      ///
 ///                                                          ///
-///  by Highpoint                last update: 25.10.24       ///
+///  by Highpoint                last update: 02.11.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -26,9 +26,10 @@ const configFilePath = path.join(__dirname, './../../plugins_configs/DX-Alert.js
 
 const defaultConfig = {
     Scanner_URL_PORT: '',			// OPTIONAL: External Webserver URL for Scanner Logfile Download (if plugin installed) e.g. 'http://fmdx.ddns.net:9080'
-    AlertFrequency: 30, 			// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent 
+    AlertFrequency: 30, 			// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent - only valid if StationModeCanLogServer: '' !
     AlertDistance: 250, 			// Distance for DX alarms in km
-	StationMode: 'off',				// Enable Alarm for every new logged TX Station (default: 'off')
+	StationMode: 'off',				// Enable Alarm for every new logged TX Station (default: 'off') 
+	StationModeCanLogServer: '',	// OPTIONAL: Activates a central server to manage alarm repetitions (e.g. '127.0.0.1:2000', default is '') - only valid if StationMode: 'on' !
     EmailAlert: 'off', 				// Enable email alert feature, 'on' or 'off'
     EmailAddressTo: '', 			// Alternative email address for DX alerts, if the field remains empty, the email address of the web server will be used 
     EmailAddressFrom: '', 			// Sender email address, email address for account
@@ -38,7 +39,7 @@ const defaultConfig = {
     EmailSecure: false, 			// Whether to use secure connection (true for port 465, false for other ports)
     TelegramAlert: 'off', 			// Telegram alert feature, 'on' or 'off'
     TelegramToken: '', 				// Telegram bot token
-    TelegramChatId: '' 			// Telegram chat ID for sending alerts
+    TelegramChatId: '' 				// Telegram chat ID for sending alerts
 };
 
 // Function to merge default config with existing config and remove undefined values
@@ -101,6 +102,7 @@ const Scanner_URL_PORT = configPlugin.Scanner_URL_PORT;
   let AlertFrequency = configPlugin.AlertFrequency;
 const AlertDistance = configPlugin.AlertDistance;
 const StationMode = configPlugin.StationMode;
+const StationModeCanLogServer = configPlugin.StationModeCanLogServer;
 
 const EmailAlert = configPlugin.EmailAlert;
 const EmailAddressTo = configPlugin.EmailAddressTo;
@@ -257,10 +259,72 @@ async function setupTextSocket() {
     }
 }
 
+// Function to fetch and evaluate the LogInterval for DXALERT
+async function getLogInterval() {
+    try {
+        // Send a GET request to the server endpoint
+        const response = await fetch(`http://${StationModeCanLogServer}/loginterval/dxalert`);
+
+        // Check if the request was successful
+        if (!response.ok) {
+            throw new Error(`HTTP-Error! Status: ${response.status}`);
+        }
+
+        // Parse the JSON object from the server response
+        const data = await response.json();
+
+        // Access and use the LogInterval_DXALERT value
+        const logIntervalDXALERT = data.LogInterval_DXALERT;
+        // LogInfo(`The LogInterval for DXALERT is: ${logIntervalDXALERT} minutes`);
+		AlertFrequency = logIntervalDXALERT;
+		
+		if (currentStatus === 'on' && EmailAlert === 'on' && TelegramAlert === 'on') {
+			logInfo(`DX-Alert broadcast Telegram & Email Status "${currentStatus}" (Email: ${ValidEmailAddressTo} / Distance: ${AlertDistance} km / Frequency: ${AlertFrequency} min. by CanLogServer ${StationModeCanLogServer})`);
+			} else if (currentStatus === 'on' && EmailAlert === 'on') {
+					logInfo(`DX-Alert broadcast "${currentStatus}" (Email: ${ValidEmailAddressTo} / Distance: ${AlertDistance} km / Frequency: ${AlertFrequency} min. by CanLogServer ${StationModeCanLogServer})`);
+				} else if (currentStatus === 'on' && TelegramAlert === 'on') {
+						logInfo(`DX-Alert broadcast Telegramm "${currentStatus}" (Distance: ${AlertDistance} km / Frequency: ${AlertFrequency} min. by CanLogServer ${StationModeCanLogServer})`);
+					} else {
+						logInfo(`DX-Alert all services are turned off`);
+					}	
+       
+    } catch (error) {
+        logError('DX-Alert Error fetching the LogInterval:', error);
+    }
+}
+
+
+// Server function to check if the ID has been logged recently
+async function CanLogServer(id) {
+    try {
+        // Send a POST request to the Express server
+        const response = await fetch(`http://${StationModeCanLogServer}/dxalert/${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        // Check the HTTP status code
+        if (response.ok) {
+            return true; // Exit if the station was logged recently
+        } else {
+            // If the response is not OK, log the error message
+            // logInfo(`${id} was already recently logged on CanLogServer`);
+            return false; // Exit if the station was logged recently
+        }
+    } catch (error) {
+        // If the server is unreachable, this block will be executed
+        logError(`Scanner error: CanLogServer ${StationModeCanLogServer} is unreachable`);
+        return false; // Station was not logged
+    }
+}
+
 const logHistory = {};
 
 // Funktion, um zu überprüfen, ob die ID in den letzten 60 Minuten protokolliert wurde
 function canLog(id) {
+	
     const now = Date.now();
 	if (AlertFrequency === '' || AlertFrequency === undefined) {
 		AlertFrequency = 60
@@ -297,7 +361,22 @@ async function handleTextSocketMessage(event) {
             const subject = `DX Alert ${ServerName} received ${station}[${itu}] from ${distance} km away!!! `;
             let message = `${ServerName} received station ${station} on ${frequency} MHz with PI: ${picode} from ${city} in [${itu}] which is ${distance} km away. `;
 			
-			if ((canLog(id) && StationMode === 'on') || (StationMode === 'off' && (firstAlert || shouldSendAlert(elapsedMinutes, message)))) { // Send the alert immediately on the first occurrence, then respect the time interval for subsequent alerts
+			let IDcheck = false;
+	  
+			if (StationModeCanLogServer && StationMode === 'on') {
+				const canLogResult = await CanLogServer(id); // Wait for the result from CanLogServer
+				if (canLogResult) {
+					IDcheck = true; 
+				}
+			}
+			
+			if (!StationModeCanLogServer && StationMode === 'on') {
+				if (canLog(id) && StationMode === 'on') {
+					IDcheck = true; 
+				}
+			}
+			
+			if (IDcheck || (StationMode === 'off' && (firstAlert || shouldSendAlert(elapsedMinutes, message)))) { // Send the alert immediately on the first occurrence, then respect the time interval for subsequent alerts
 					
                 processingAlert = true;
                 firstAlert = false; // Set the flag to false after the first alert is sent
@@ -491,15 +570,19 @@ function connectToWebSocket() {
 
 // Log broadcast information based on current status
 function logBroadcastInfo() {
-	if (currentStatus === 'on' && EmailAlert === 'on' && TelegramAlert === 'on') {
-		logInfo(`DX-Alert broadcast Telegram & Email Status "${currentStatus}" (Email: ${ValidEmailAddressTo} / Distance: ${AlertDistance} km / Frequency: ${AlertFrequency} min.)`);
-	} else if (currentStatus === 'on' && EmailAlert === 'on') {
-		logInfo(`DX-Alert broadcast "${currentStatus}" (Email: ${ValidEmailAddressTo} / Distance: ${AlertDistance} km / Frequency: ${AlertFrequency} min.)`);
-		} else if (currentStatus === 'on' && TelegramAlert === 'on') {
-			logInfo(`DX-Alert broadcast Telegramm "${currentStatus}" (Distance: ${AlertDistance} km / Frequency: ${AlertFrequency} min.)`);
-			} else {
-				logInfo(`DX-Alert all services are turned off`);
-			}
+		if (StationModeCanLogServer && StationMode === 'on') {
+			getLogInterval();
+		} else {
+			if (currentStatus === 'on' && EmailAlert === 'on' && TelegramAlert === 'on') {
+				logInfo(`DX-Alert broadcast Telegram & Email Status "${currentStatus}" (Email: ${ValidEmailAddressTo} / Distance: ${AlertDistance} km / Frequency: ${AlertFrequency} min.)`);
+				} else if (currentStatus === 'on' && EmailAlert === 'on') {
+					logInfo(`DX-Alert broadcast "${currentStatus}" (Email: ${ValidEmailAddressTo} / Distance: ${AlertDistance} km / Frequency: ${AlertFrequency} min.)`);
+					} else if (currentStatus === 'on' && TelegramAlert === 'on') {
+						logInfo(`DX-Alert broadcast Telegramm "${currentStatus}" (Distance: ${AlertDistance} km / Frequency: ${AlertFrequency} min.)`);
+						} else {
+							logInfo(`DX-Alert all services are turned off`);
+						}
+		}
 }
 
 // Handle incoming WebSocket messages
