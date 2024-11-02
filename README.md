@@ -30,7 +30,7 @@ The following variables can be changed in the DX-Alert.json:
     AlertFrequency: 30, 			// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent 
     AlertDistance: 250, 			// Distance for DX alarms in km
     StationMode: 'off',                     // Set it 'on' to enable alarm for every new logged TX Station (default: 'off')
-	StationModeCanLogServer: '',	// OPTIONAL: Activates a central server to manage alarm repetitions (e.g. '127.0.0.1:2000', default is '') - only valid if StationMode: 'on' !
+    StationModeCanLogServer: '',		// OPTIONAL: Activates a central server to manage alarm repetitions (e.g. '127.0.0.1:2000', default is '') - only valid if StationMode: 'on' !
     
     //// Email Options ////
     EmailAlert: 'off', 			// Enable email alert feature, 'on' or 'off'
