@@ -4,9 +4,10 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 
 ![image](https://github.com/user-attachments/assets/7683433d-d55a-47b4-bee3-46c9c57da509)
 
-## Version 3.4 (only works from web server version 1.2.8.1 and CanLogServer version 2.0 !!!)
+## Version 3.5 (only works from web server version 1.2.8.1 and CanLogServer version 2.0 !!!)
 
-- added Support for [CanLogServer](https://github.com/Highpoint2000/canlog-server) (Version 2.0)
+- Upper distance limit installed
+- Added second Telegram channel
 
 ## Installation notes:
 
@@ -27,8 +28,9 @@ The following variables can be changed in the DX-Alert.json:
 
     //// Alert Options ////
     Scanner_URL_PORT: '',			// OPTIONAL: External Webserver URL for Scanner Logfile Download (if plugin installed) e.g. 'http://fmdx.ddns.net:9080'
-    AlertFrequency: 30, 			// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent 
-    AlertDistance: 250, 			// Distance for DX alarms in km
+    AlertFrequency: 30, 			// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent (default: 30)
+    AlertDistance: 250, 			// Distance for DX alarms in km (default: 250)
+	AlertDistanceMax: 2500, 		// Maximum distance for DX alarms in km (default; 2500)
     StationMode: 'off',                     // Set it 'on' to enable alarm for every new logged TX Station (default: 'off')
     StationModeCanLogServer: '',		// OPTIONAL: Activates a central server to manage alarm repetitions (e.g. '127.0.0.1:2000', default is '') - only valid if StationMode: 'on' !
     
@@ -45,6 +47,8 @@ The following variables can be changed in the DX-Alert.json:
     TelegramAlert: 'off', 			// Telegram alert feature, 'on' or 'off'
     TelegramToken: '', 			// Telegram bot token
     TelegramChatId: '', 			// Telegram chat ID for sending alerts
+	    TelegramToken2: '', 			// Telegram bot token
+    TelegramChatId2: '' 			// Telegram chat ID for sending alerts
 
 ## Notes: 
 
@@ -62,6 +66,10 @@ Please note:
 - If there are several web servers, it makes sense to register the alarms that have already been sent via a central server in order to avoid duplicate alarms. The [CanLogServer](https://github.com/Highpoint2000/canlog-server) can provide this functionality. When using the server, the log interval set in DX-Alert.json is inactive because the log interval set for the server has priority!
 
 ## History: 
+
+### Version 3.4 (only works from web server version 1.2.8.1 and CanLogServer version 2.0 !!!)
+
+- added Support for [CanLogServer](https://github.com/Highpoint2000/canlog-server) (Version 2.0)
 
 ### Version 3.3 (only works from web server version 1.2.8.1 !!!)
 
