@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.4)      ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.5)       ///
 ///                                                          ///
-///  by Highpoint                last update: 02.11.24       ///
+///  by Highpoint                last update: 07.11.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -28,6 +28,7 @@ const defaultConfig = {
     Scanner_URL_PORT: '',			// OPTIONAL: External Webserver URL for Scanner Logfile Download (if plugin installed) e.g. 'http://fmdx.ddns.net:9080'
     AlertFrequency: 30, 			// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent - only valid if StationModeCanLogServer: '' !
     AlertDistance: 250, 			// Distance for DX alarms in km
+	AlertDistanceMax: 2500, 		// Maximum distance for DX alarms in km
 	StationMode: 'off',				// Enable Alarm for every new logged TX Station (default: 'off') 
 	StationModeCanLogServer: '',	// OPTIONAL: Activates a central server to manage alarm repetitions (e.g. '127.0.0.1:2000', default is '') - only valid if StationMode: 'on' !
     EmailAlert: 'off', 				// Enable email alert feature, 'on' or 'off'
@@ -39,7 +40,9 @@ const defaultConfig = {
     EmailSecure: false, 			// Whether to use secure connection (true for port 465, false for other ports)
     TelegramAlert: 'off', 			// Telegram alert feature, 'on' or 'off'
     TelegramToken: '', 				// Telegram bot token
-    TelegramChatId: '' 				// Telegram chat ID for sending alerts
+    TelegramChatId: '', 			// Telegram chat ID for sending alerts
+	TelegramToken2: '', 			// Telegram bot token 2
+    TelegramChatId2: '' 			// Telegram chat ID 2 for sending alerts
 };
 
 // Function to merge default config with existing config and remove undefined values
@@ -101,6 +104,7 @@ const configPlugin = loadConfig(configFilePath);
 const Scanner_URL_PORT = configPlugin.Scanner_URL_PORT;
   let AlertFrequency = configPlugin.AlertFrequency;
 const AlertDistance = configPlugin.AlertDistance;
+const AlertDistanceMax = configPlugin.AlertDistanceMax;
 const StationMode = configPlugin.StationMode;
 const StationModeCanLogServer = configPlugin.StationModeCanLogServer;
 
@@ -115,7 +119,8 @@ const EmailSecure = configPlugin.EmailSecure;
 const TelegramAlert = configPlugin.TelegramAlert;
 const TelegramToken = configPlugin.TelegramToken;
 const TelegramChatId = configPlugin.TelegramChatId;
-
+const TelegramToken2 = configPlugin.TelegramToken2;
+const TelegramChatId2 = configPlugin.TelegramChatId2;
 
 
 ////////////////////////////////////////////////////////////////
@@ -224,7 +229,8 @@ function createMessage(status, source) {
             email: ValidEmailAddressTo,
 			TelegramAlert: TelegramAlert,
             freq: AlertFrequency,
-            dist: AlertDistance
+            dist: AlertDistance,
+			distMax: AlertDistanceMax
         },
         source: clientID,
         target: source
@@ -279,11 +285,11 @@ async function getLogInterval() {
 		AlertFrequency = logIntervalDXALERT;
 		
 		if (currentStatus === 'on' && EmailAlert === 'on' && TelegramAlert === 'on') {
-			logInfo(`DX-Alert broadcast Telegram & Email Status "${currentStatus}" (Email: ${ValidEmailAddressTo} / Distance: ${AlertDistance} km / Frequency: ${AlertFrequency} min. by CanLogServer ${StationModeCanLogServer})`);
+			logInfo(`DX-Alert broadcast Telegram & Email Status "${currentStatus}" (Email: ${ValidEmailAddressTo} / Distance: ${AlertDistance}-${AlertDistanceMax} km / Frequency: ${AlertFrequency} min. by CanLogServer ${StationModeCanLogServer})`);
 			} else if (currentStatus === 'on' && EmailAlert === 'on') {
-					logInfo(`DX-Alert broadcast "${currentStatus}" (Email: ${ValidEmailAddressTo} / Distance: ${AlertDistance} km / Frequency: ${AlertFrequency} min. by CanLogServer ${StationModeCanLogServer})`);
+					logInfo(`DX-Alert broadcast "${currentStatus}" (Email: ${ValidEmailAddressTo} / Distance: ${AlertDistance}-${AlertDistanceMax} km / Frequency: ${AlertFrequency} min. by CanLogServer ${StationModeCanLogServer})`);
 				} else if (currentStatus === 'on' && TelegramAlert === 'on') {
-						logInfo(`DX-Alert broadcast Telegramm "${currentStatus}" (Distance: ${AlertDistance} km / Frequency: ${AlertFrequency} min. by CanLogServer ${StationModeCanLogServer})`);
+						logInfo(`DX-Alert broadcast Telegramm "${currentStatus}" (Distance: ${AlertDistance} km / Frequency: ${AlertFrequency}-${AlertDistanceMax} min. by CanLogServer ${StationModeCanLogServer})`);
 					} else {
 						logInfo(`DX-Alert all services are turned off`);
 					}	
@@ -352,7 +358,7 @@ async function handleTextSocketMessage(event) {
             return;
         }
 
-        if (currentStatus === 'on' && distance > AlertDistance) {
+        if (currentStatus === 'on' && distance > AlertDistance && distance > AlertDistanceMax) {
             if (processingAlert) return;					
 			
             const now = Date.now();
@@ -483,7 +489,7 @@ function handleEmailResponse(subject, message, source) {
 
 // Function to send message to Telegram
 function sendTelegram(subject, message, source) {
-
+	
     fetch('https://api.telegram.org/bot' + TelegramToken + '/sendMessage?chat_id=' + TelegramChatId + '&text=' + message)
         .then(response => {
             if (response.ok) {
@@ -496,6 +502,22 @@ function sendTelegram(subject, message, source) {
             }
         })
         .catch(error => logError(error.message));
+		
+	if (TelegramToken2 !== '' && TelegramChatId2 !== '') {
+			
+		 fetch('https://api.telegram.org/bot' + TelegramToken2 + '/sendMessage?chat_id=' + TelegramChatId2 + '&text=' + message)
+        .then(response => {
+            if (response.ok) {
+                handleTelegramResponse(subject, message, source);
+            } else {
+                return response.text().then(errorText => {
+                    sendWebSocketNotification('error', message, source);
+                    throw new Error('Failed to send Telegram message. Error: ' + errorText);
+                });
+            }
+        })
+        .catch(error => logError(error.message));
+	}
 }
 
 // Handle Telegram response
@@ -574,11 +596,11 @@ function logBroadcastInfo() {
 			getLogInterval();
 		} else {
 			if (currentStatus === 'on' && EmailAlert === 'on' && TelegramAlert === 'on') {
-				logInfo(`DX-Alert broadcast Telegram & Email Status "${currentStatus}" (Email: ${ValidEmailAddressTo} / Distance: ${AlertDistance} km / Frequency: ${AlertFrequency} min.)`);
+				logInfo(`DX-Alert broadcast Telegram & Email Status "${currentStatus}" (Email: ${ValidEmailAddressTo} / Distance: ${AlertDistance}-${AlertDistanceMax} km / Frequency: ${AlertFrequency} min.)`);
 				} else if (currentStatus === 'on' && EmailAlert === 'on') {
-					logInfo(`DX-Alert broadcast "${currentStatus}" (Email: ${ValidEmailAddressTo} / Distance: ${AlertDistance} km / Frequency: ${AlertFrequency} min.)`);
+					logInfo(`DX-Alert broadcast "${currentStatus}" (Email: ${ValidEmailAddressTo} / Distance: ${AlertDistance}-${AlertDistanceMax} km / Frequency: ${AlertFrequency} min.)`);
 					} else if (currentStatus === 'on' && TelegramAlert === 'on') {
-						logInfo(`DX-Alert broadcast Telegramm "${currentStatus}" (Distance: ${AlertDistance} km / Frequency: ${AlertFrequency} min.)`);
+						logInfo(`DX-Alert broadcast Telegramm "${currentStatus}" (Distance: ${AlertDistance}-${AlertDistanceMax} km / Frequency: ${AlertFrequency} min.)`);
 						} else {
 							logInfo(`DX-Alert all services are turned off`);
 						}
