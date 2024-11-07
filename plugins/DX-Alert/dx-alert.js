@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.4)      ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.5)      ///
 ///                                                          ///
-///  by Highpoint                last update: 01.11.24       ///
+///  by Highpoint                last update: 07.11.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -13,7 +13,7 @@
 ///  This plugin only works from web server version 1.2.8.1!!!
 
 (() => {
-    const plugin_version = 'V3.4';
+    const plugin_version = 'V3.5';
     let AlertActive = false;
     let wsSendSocket;
     let pressTimer;
@@ -21,6 +21,7 @@
     let ValidEmailAddress = null; // Email address for alerts
     let NewEmailFrequency = null;
     let AlertDistance = null;
+	let AlertDistanceMax = null;
 	let EmailAlert;
 	let alertShown = false;
 
@@ -79,7 +80,7 @@
             const eventData = JSON.parse(event.data);
 			console.log(eventData); 
             if (eventData.type === 'DX-Alert' && eventData.source !== sessionId) {
-                let { status, EmailAlert, email, TelegramAlert, freq, dist, subject, message } = eventData.value;
+                let { status, EmailAlert, email, TelegramAlert, freq, dist, distMax, subject, message } = eventData.value;
 				
 				// Check if "Logfile" is present in the message
 				if (message && message.includes("Logfile")) {
@@ -142,22 +143,23 @@
 						AlertActive = status === 'on';
 						NewEmailFrequency = freq;
 						AlertDistance = dist;
+						AlertDistanceMax = distMax;
 						setButtonStatus(AlertActive);
 
 						if (!alertShown && isTuneAuthenticated && status === 'on' && (eventData.target === '000000000000' || eventData.target === sessionId)) {
 							const alertStatusMessage = `DX ALERT ${AlertActive ? 'activated' : 'deactivated'}`;
 							if (EmailAlert === 'on' && TelegramAlert === 'on') {
-								const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)` : '';
+								const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance}-${AlertDistanceMax} km / frequency: ${NewEmailFrequency} min.)` : '';
 								console.log(`${alertStatusMessage}${alertDetailsMessage}`);
-								sendToast('info', 'DX-Alert', `activated for Telegram & ${ValidEmailAddress}\n(Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)`, false, false);
+								sendToast('info', 'DX-Alert', `activated for Telegram & ${ValidEmailAddress}\n(Alert distance: ${AlertDistance}-${AlertDistanceMax} km / frequency: ${NewEmailFrequency} min.)`, false, false);
 								} else if (EmailAlert === 'on') {
-									const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)` : '';
+									const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance}-${AlertDistanceMax} km / frequency: ${NewEmailFrequency} min.)` : '';
 									console.log(`${alertStatusMessage}${alertDetailsMessage}`);
-									sendToast('info', 'DX-Alert', `activated for ${ValidEmailAddress}\n(Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)`, false, false);
+									sendToast('info', 'DX-Alert', `activated for ${ValidEmailAddress}\n(Alert distance: ${AlertDistance}-${AlertDistanceMax} km / frequency: ${NewEmailFrequency} min.)`, false, false);
 									} else if (TelegramAlert === 'on') {
-										const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)` : '';
+										const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance}-${AlertDistanceMax} km / frequency: ${NewEmailFrequency} min.)` : '';
 										console.log(`${alertStatusMessage}${alertDetailsMessage}`);
-										sendToast('info', 'DX-Alert', `activated for Telegram\n(Alert distance: ${AlertDistance} km / frequency: ${NewEmailFrequency} min.)`, false, false);
+										sendToast('info', 'DX-Alert', `activated for Telegram\n(Alert distance: ${AlertDistance}-${AlertDistanceMax} km / frequency: ${NewEmailFrequency} min.)`, false, false);
 									}
 
 							alertShown = true;
