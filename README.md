@@ -47,8 +47,8 @@ The following variables can be changed in the DX-Alert.json:
     TelegramAlert: 'off', 			// Telegram alert feature, 'on' or 'off'
     TelegramToken: '', 			// Telegram bot token
     TelegramChatId: '', 			// Telegram chat ID for sending alerts
-    TelegramToken2: '', 			// Telegram bot token
-    TelegramChatId2: '' 			// Telegram chat ID for sending alerts
+    TelegramToken2: '', 			// Telegram bot token 2
+    TelegramChatId2: '' 			// Telegram chat ID 2 for sending alerts
 
 ## Notes: 
 
