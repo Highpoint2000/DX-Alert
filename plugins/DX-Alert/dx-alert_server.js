@@ -289,7 +289,7 @@ async function getLogInterval() {
 			} else if (currentStatus === 'on' && EmailAlert === 'on') {
 					logInfo(`DX-Alert broadcast "${currentStatus}" (Email: ${ValidEmailAddressTo} / Distance: ${AlertDistance}-${AlertDistanceMax} km / Frequency: ${AlertFrequency} min. by CanLogServer ${StationModeCanLogServer})`);
 				} else if (currentStatus === 'on' && TelegramAlert === 'on') {
-						logInfo(`DX-Alert broadcast Telegramm "${currentStatus}" (Distance: ${AlertDistance} km / Frequency: ${AlertFrequency}-${AlertDistanceMax} min. by CanLogServer ${StationModeCanLogServer})`);
+						logInfo(`DX-Alert broadcast Telegramm "${currentStatus}" (Distance: ${AlertDistance}-${AlertDistanceMax} km / Frequency: ${AlertFrequency} min. by CanLogServer ${StationModeCanLogServer})`);
 					} else {
 						logInfo(`DX-Alert all services are turned off`);
 					}	
