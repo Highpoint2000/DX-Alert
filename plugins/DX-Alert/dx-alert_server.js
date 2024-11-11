@@ -358,7 +358,7 @@ async function handleTextSocketMessage(event) {
             return;
         }
 
-        if (currentStatus === 'on' && distance > AlertDistance && distance > AlertDistanceMax) {
+        if (currentStatus === 'on' && distance > AlertDistance && distance < AlertDistanceMax) {
             if (processingAlert) return;					
 			
             const now = Date.now();
