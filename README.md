@@ -2,7 +2,8 @@
 
 This plugin provides email notifications and Telegram Messages for DX reception with the FM-DX web server depending on a selected distance and frequency.
 
-![Uploading image.png…]()
+![image](https://github.com/user-attachments/assets/e10a6fba-4514-4c1a-a41f-4a3ae0435449)
+
 
 
 ## Version 3.5 (only works from web server version 1.2.8.1 and CanLogServer version 2.0 !!!)
