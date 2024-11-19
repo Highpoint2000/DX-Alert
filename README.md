@@ -6,10 +6,10 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 
 
 
-## Version 3.5 (only works from web server version 1.2.8.1 and CanLogServer version 2.0 !!!)
+### Version 3.5a (only works from web server version 1.2.8.1 and CanLogServer version 2.0 !!!)
 
-- Upper distance limit installed
-- Added second Telegram channel
+- Implemented handling of special characters in the server name
+- Daily update check for admin
 
 ## Installation notes:
 
@@ -68,6 +68,11 @@ Please note:
 - If there are several web servers, it makes sense to register the alarms that have already been sent via a central server in order to avoid duplicate alarms. The [CanLogServer](https://github.com/Highpoint2000/canlog-server) can provide this functionality. When using the server, the log interval set in DX-Alert.json is inactive because the log interval set for the server has priority!
 
 ## History: 
+
+### Version 3.5 (only works from web server version 1.2.8.1 and CanLogServer version 2.0 !!!)
+
+- Upper distance limit installed
+- Added second Telegram channel
 
 ### Version 3.4 (only works from web server version 1.2.8.1 and CanLogServer version 2.0 !!!)
 
