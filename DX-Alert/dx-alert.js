@@ -1,8 +1,9 @@
+(() => {
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.5)      ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.5a)      ///
 ///                                                          ///
-///  by Highpoint                last update: 11.11.24       ///
+///  by Highpoint                last update: 19.11.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -12,8 +13,15 @@
 
 ///  This plugin only works from web server version 1.2.8.1!!!
 
-(() => {
-    const plugin_version = 'V3.5';
+const updateInfo = true; // Enable or disable version check
+
+/////////////////////////////////////////////////////////////////
+
+    const plugin_version = '3.5a';
+	const plugin_path = 'https://raw.githubusercontent.com/highpoint2000/DX-Alert/';
+	const plugin_JSfile = 'main/DX-Alert/dx-alert.js'
+	const plugin_name = 'DX Alert';
+  
     let AlertActive = false;
     let wsSendSocket;
     let pressTimer;
@@ -24,6 +32,8 @@
 	let AlertDistanceMax = null;
 	let EmailAlert;
 	let alertShown = false;
+    var isTuneAuthenticated = false;
+	const PluginUpdateKey = `${plugin_name}_lastUpdateNotification`; // Unique key for localStorage
 
     // Generate a random 12-digit session ID to replace the IP address
     let sessionId = Math.floor(Math.random() * 1e12).toString().padStart(12, '0'); // Generates a 12-digit random session ID
@@ -355,12 +365,96 @@ async function sendTestEmail() {
 
     }
 
-    // Check if user is authenticated as admin or receiver controller
-    var isTuneAuthenticated = false;
-
     function checkAdminMode() {
         const bodyText = document.body.textContent || document.body.innerText;
         isTuneAuthenticated = bodyText.includes("You are logged in as an administrator.") || bodyText.includes("You are logged in as an adminstrator.");
         console.log(isTuneAuthenticated ? `DX ALERT Authentication successful.` : "Authentication failed.");
     }
+	
+	 // Function to check if the notification was shown today
+  function shouldShowNotification() {
+    const lastNotificationDate = localStorage.getItem(PluginUpdateKey);
+    const today = new Date().toISOString().split('T')[0]; // Get current date in YYYY-MM-DD format
+
+    if (lastNotificationDate === today) {
+      return false; // Notification already shown today
+    }
+    // Update the date in localStorage to today
+    localStorage.setItem(PluginUpdateKey, today);
+    return true;
+  }
+
+  // Function to check plugin version
+  function checkPluginVersion() {
+    // Fetch and evaluate the plugin script
+    fetch(`${plugin_path}${plugin_JSfile}`)
+      .then(response => response.text())
+      .then(script => {
+        // Search for plugin_version in the external script
+        const pluginVersionMatch = script.match(/const plugin_version = '([\d.]+[a-z]*)?';/);
+        if (!pluginVersionMatch) {
+          console.error(`${plugin_name}: Plugin version could not be found`);
+          return;
+        }
+
+        const externalPluginVersion = pluginVersionMatch[1];
+
+        // Function to compare versions
+		function compareVersions(local, remote) {
+			const parseVersion = (version) =>
+				version.split(/(\d+|[a-z]+)/i).filter(Boolean).map((part) => (isNaN(part) ? part : parseInt(part, 10)));
+
+			const localParts = parseVersion(local);
+			const remoteParts = parseVersion(remote);
+
+			for (let i = 0; i < Math.max(localParts.length, remoteParts.length); i++) {
+				const localPart = localParts[i] || 0; // Default to 0 if part is missing
+				const remotePart = remoteParts[i] || 0;
+
+				if (typeof localPart === 'number' && typeof remotePart === 'number') {
+					if (localPart > remotePart) return 1;
+					if (localPart < remotePart) return -1;
+				} else if (typeof localPart === 'string' && typeof remotePart === 'string') {
+					// Lexicographical comparison for strings
+					if (localPart > remotePart) return 1;
+					if (localPart < remotePart) return -1;
+				} else {
+					// Numeric parts are "less than" string parts (e.g., `3.5` < `3.5a`)
+					return typeof localPart === 'number' ? -1 : 1;
+				}
+			}
+
+			return 0; // Versions are equal
+		}
+
+
+        // Check version and show notification if needed
+        const comparisonResult = compareVersions(plugin_version, externalPluginVersion);
+        if (comparisonResult === 1) {
+          // Local version is newer than the external version
+          console.log(`${plugin_name}: The local version is newer than the plugin version.`);
+        } else if (comparisonResult === -1) {
+          // External version is newer and notification should be shown
+          if (shouldShowNotification()) {
+            console.log(`${plugin_name}: Plugin update available: ${plugin_version} -> ${externalPluginVersion}`);
+			sendToast('warning important', `${plugin_name}`, `Update available:<br>${plugin_version} -> ${externalPluginVersion}`, false, false);
+            }
+        } else {
+          // Versions are the same
+          console.log(`${plugin_name}: The local version matches the plugin version.`);
+        }
+      })
+      .catch(error => {
+        console.error(`${plugin_name}: Error fetching the plugin script:`, error);
+      });
+	}
+	
+	setTimeout(() => {
+
+	// Execute the plugin version check if updateInfo is true and admin ist logged on
+	if (updateInfo && isTuneAuthenticated) {
+		checkPluginVersion();
+		}
+	}, 200);
+		
 })();
