@@ -13,7 +13,7 @@
 ///  This plugin only works from web server version 1.2.8.1!!!
 
 (() => {
-    const plugin_version = 'V3.5';
+    const plugin_version = '3.5';
     let AlertActive = false;
     let wsSendSocket;
     let pressTimer;
