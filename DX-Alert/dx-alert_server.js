@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.5)       ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.5a)      ///
 ///                                                          ///
-///  by Highpoint                last update: 11.11.24       ///
+///  by Highpoint                last update: 19.11.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -18,91 +18,75 @@ const http = require('http');
 const { logInfo, logError, logDebug } = require('./../../server/console');
 const FmlistLogURL = 'http://127.0.0.1:4080/log_fmlist';
 
+function sanitizeInput(input) {
+    return encodeURIComponent(input); // Encodes critical characters for safe usage
+}
+
 // Define the path to the configuration file
 const configFilePath = path.join(__dirname, './../../plugins_configs/DX-Alert.json');
 
-// Default values for the configuration file 
-// Do not enter this values !!! Save your configuration in configPlugin.json. This is created automatically when you first start.
-
+// Default values for the configuration file
 const defaultConfig = {
-    Scanner_URL_PORT: '',			// OPTIONAL: External Webserver URL for Scanner Logfile Download (if plugin installed) e.g. 'http://fmdx.ddns.net:9080'
-    AlertFrequency: 30, 			// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent - only valid if StationModeCanLogServer: '' !
-    AlertDistance: 250, 			// Distance for DX alarms in km
-	AlertDistanceMax: 2500, 		// Maximum distance for DX alarms in km
-	StationMode: 'off',				// Enable Alarm for every new logged TX Station (default: 'off') 
-	StationModeCanLogServer: '',	// OPTIONAL: Activates a central server to manage alarm repetitions (e.g. '127.0.0.1:2000', default is '') - only valid if StationMode: 'on' !
-    EmailAlert: 'off', 				// Enable email alert feature, 'on' or 'off'
-    EmailAddressTo: '', 			// Alternative email address for DX alerts, if the field remains empty, the email address of the web server will be used 
-    EmailAddressFrom: '', 			// Sender email address, email address for account
-    EmailPassword: '', 				// E-mail password/application-specific password 
-    EmailHost: 'smtp.gmail.com', 	// SMTP server for email, e.g. 'smtp.gmail.com' for GMAIL
-    EmailPort: '587', 				// Port for email server, e.g. '587' for GMAIL
-    EmailSecure: false, 			// Whether to use secure connection (true for port 465, false for other ports)
-    TelegramAlert: 'off', 			// Telegram alert feature, 'on' or 'off'
-    TelegramToken: '', 				// Telegram bot token
-    TelegramChatId: '', 			// Telegram chat ID for sending alerts
-	TelegramToken2: '', 			// Telegram bot token 2
-    TelegramChatId2: '' 			// Telegram chat ID 2 for sending alerts
+    Scanner_URL_PORT: '',
+    AlertFrequency: 30,
+    AlertDistance: 250,
+    AlertDistanceMax: 2500,
+    StationMode: 'off',
+    StationModeCanLogServer: '',
+    EmailAlert: 'off',
+    EmailAddressTo: '',
+    EmailAddressFrom: '',
+    EmailPassword: '',
+    EmailHost: 'smtp.gmail.com',
+    EmailPort: '587',
+    EmailSecure: false,
+    TelegramAlert: 'off',
+    TelegramToken: '',
+    TelegramChatId: '',
+    TelegramToken2: '',
+    TelegramChatId2: ''
 };
 
-// Function to merge default config with existing config and remove undefined values
+// Function to merge default config with existing config
 function mergeConfig(defaultConfig, existingConfig) {
-    // Only keep the keys that are defined in the defaultConfig
     const updatedConfig = {};
-
-    // Add the existing values that match defaultConfig keys
     for (const key in defaultConfig) {
         updatedConfig[key] = key in existingConfig ? existingConfig[key] : defaultConfig[key];
     }
-
     return updatedConfig;
 }
 
 // Function to load or create the configuration file
 function loadConfig(filePath) {
     let existingConfig = {};
-    const oldConfigPath = path.join(__dirname, 'configPlugin.json'); // Path to the old configuration file
+    const oldConfigPath = path.join(__dirname, 'configPlugin.json');
 
-    // Ensure the directory exists before trying to write the new config file
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
     }
 
-    // Check if the old configuration file exists
     if (fs.existsSync(oldConfigPath)) {
-        // Read the old configuration file
         existingConfig = JSON.parse(fs.readFileSync(oldConfigPath, 'utf-8'));
         logInfo('Old configuration found at configPlugin.json. Migrating to new file.');
-
-        // Save the old configuration under the new file path
         fs.writeFileSync(filePath, JSON.stringify(existingConfig, null, 2), 'utf-8');
-        
-        // Delete the old configuration file
         fs.unlinkSync(oldConfigPath);
         logInfo('Old configuration file configPlugin.json deleted after migration.');
     } else if (fs.existsSync(filePath)) {
-        // Read the existing DX-Alert.json configuration file if it already exists
         existingConfig = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
     } else {
         logInfo('DX-Alert configuration not found. Creating configPlugin.json.');
     }
 
-    // Merge the default config with the existing one, adding missing fields and removing undefined
     const finalConfig = mergeConfig(defaultConfig, existingConfig);
-
-    // Write the updated configuration back to the file (if changes were made)
     fs.writeFileSync(filePath, JSON.stringify(finalConfig, null, 2), 'utf-8');
-
     return finalConfig;
 }
 
-// Load or create the configuration file
 const configPlugin = loadConfig(configFilePath);
 
-// Zugriff auf die Variablen
 const Scanner_URL_PORT = configPlugin.Scanner_URL_PORT;
-  let AlertFrequency = configPlugin.AlertFrequency;
+let AlertFrequency = configPlugin.AlertFrequency;
 const AlertDistance = configPlugin.AlertDistance;
 const AlertDistanceMax = configPlugin.AlertDistanceMax;
 const StationMode = configPlugin.StationMode;
@@ -122,37 +106,31 @@ const TelegramChatId = configPlugin.TelegramChatId;
 const TelegramToken2 = configPlugin.TelegramToken2;
 const TelegramChatId2 = configPlugin.TelegramChatId2;
 
-
 ////////////////////////////////////////////////////////////////
 
 const config = require('./../../config.json');
 const WebSocket = require('ws');
 
-// WebSocket and Server Configuration
-const checkInterval = 1000; // Check interval in milliseconds
+const checkInterval = 1000;
 const clientID = 'Server';
-const ServerName = config.identification.tunerName;
-const webserverPort = config.webserver.webserverPort || 8080; // Default to port 8080 if not specified
+const ServerName = sanitizeInput(config.identification.tunerName);
+const webserverPort = config.webserver.webserverPort || 8080;
 const externalWsUrl = `ws://127.0.0.1:${webserverPort}`;
 
 let currentStatus = 'off';
 let lastStatus = 'off';
-// Internal Variables
 if (EmailAlert === 'on' || TelegramAlert === 'on') {
-	currentStatus = 'on'; // Current status of the alert system
-	lastStatus = 'on'; // Last known status
+    currentStatus = 'on';
+    lastStatus = 'on';
 }
-let lastAlertTime = Date.now(); // Last alert time
-let lastAlertMessage = ""; // Last alert message
-let TextSocket; // WebSocket connection for text alerts
+let lastAlertTime = Date.now();
+let lastAlertMessage = "";
+let TextSocket;
 let message_link;
-const sentMessages = new Set(); // Track sent messages to avoid duplicates
+const sentMessages = new Set();
 
-// Function to check and install missing NewModules
 const { execSync } = require('child_process');
-const NewModules = [
-    'nodemailer',
-];
+const NewModules = ['nodemailer'];
 
 function checkAndInstallNewModules() {
     NewModules.forEach(module => {
@@ -164,103 +142,78 @@ function checkAndInstallNewModules() {
                 console.log(`Module ${module} installed successfully.`);
             } catch (error) {
                 logError(`Error installing module ${module}:`, error);
-                process.exit(1); // Exit the process with an error code
+                process.exit(1);
             }
-        } else {
-            // console.log(`Module ${module} is already installed.`);
         }
     });
 }
 
-// Check and install missing NewModules before starting the server
 checkAndInstallNewModules();
 
 const nodemailer = require('nodemailer');
-
-// Create a transporter object using SMTP transport
 const transporter = nodemailer.createTransport({
-	host: EmailHost, 
-    port: EmailPort,            
-    secure: EmailSecure,         
+    host: EmailHost,
+    port: EmailPort,
+    secure: EmailSecure,
     auth: {
         user: EmailAddressFrom,
         pass: EmailPassword
     }
 });
 
-
-// Validate email format using regex
 function validateEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
 }
 
-// Get a valid email address from config or use provided email
 function getValidEmail() {
-    // Check if the provided EmailAddressTo is valid
     if (validateEmail(EmailAddressTo)) {
         return EmailAddressTo;
     }
-
-    // If EmailAddressTo is invalid or empty, check config.identification.contact
     if (!EmailAddressTo && validateEmail(config.identification.contact)) {
         return config.identification.contact;
     }
-
-    // If neither is valid, return an empty string
     return '';
 }
 
 const ValidEmailAddressTo = getValidEmail();
 
-// If the email is invalid, stop further execution
 if (ValidEmailAddressTo === '' && EmailAlert === 'on') {
     logError("DX-Alert No valid email address found. DX ALERT not started.");
-    return; // Exit the script with a failure code
+    return;
 }
 
-// Create a status message object
 function createMessage(status, source) {
     return {
         type: 'DX-Alert',
         value: {
             status: status,
-			EmailAlert: EmailAlert,
+            EmailAlert: EmailAlert,
             email: ValidEmailAddressTo,
-			TelegramAlert: TelegramAlert,
+            TelegramAlert: TelegramAlert,
             freq: AlertFrequency,
             dist: AlertDistance,
-			distMax: AlertDistanceMax
+            distMax: AlertDistanceMax
         },
         source: clientID,
         target: source
     };
 }
 
-// Setup the TextSocket WebSocket connection
 async function setupTextSocket() {
     if (!TextSocket || TextSocket.readyState === WebSocket.CLOSED) {
         try {
             TextSocket = new WebSocket(externalWsUrl + '/text');
-
-            TextSocket.addEventListener("open", () => {
-                logInfo("DX-Alert Text Websocket connected.");
-            });
-
+            TextSocket.addEventListener("open", () => logInfo("DX-Alert Text Websocket connected."));
             TextSocket.addEventListener("message", handleTextSocketMessage);
-
-            TextSocket.addEventListener("error", (error) => {
-                logError("TextSocket error:", error);
+            TextSocket.addEventListener("error", (error) => logError("TextSocket error:", error));
+            TextSocket.addEventListener("close", () => {
+                logInfo("TextSocket closed.");
+                setTimeout(setupTextSocket, 5000);
             });
-
-            TextSocket.addEventListener("close", (event) => {
-                logInfo("TextSocket closed:", event);
-                setTimeout(setupTextSocket, 5000); // Retry connection after 5 seconds
-            });
-
         } catch (error) {
             logError("Failed to setup TextSocket:", error);
-            setTimeout(setupTextSocket, 5000); // Retry connection after 5 seconds
+            setTimeout(setupTextSocket, 5000);
         }
     }
 }
