@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.5a)      ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.5b)      ///
 ///                                                          ///
-///  by Highpoint                last update: 19.11.24       ///
+///  by Highpoint                last update: 29.12.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -26,6 +26,7 @@ function sanitizeInput(input) {
 const configFilePath = path.join(__dirname, './../../plugins_configs/DX-Alert.json');
 
 // Default values for the configuration file
+// Default values for the configuration file
 const defaultConfig = {
     Scanner_URL_PORT: '',
     AlertFrequency: 30,
@@ -36,7 +37,8 @@ const defaultConfig = {
     EmailAlert: 'off',
     EmailAddressTo: '',
     EmailAddressFrom: '',
-    EmailPassword: '',
+    EmailUsername: '', // SMTP username
+    EmailPassword: '', // SMTP password
     EmailHost: 'smtp.gmail.com',
     EmailPort: '587',
     EmailSecure: false,
@@ -46,6 +48,7 @@ const defaultConfig = {
     TelegramToken2: '',
     TelegramChatId2: ''
 };
+
 
 // Function to merge default config with existing config
 function mergeConfig(defaultConfig, existingConfig) {
@@ -95,6 +98,7 @@ const StationModeCanLogServer = configPlugin.StationModeCanLogServer;
 const EmailAlert = configPlugin.EmailAlert;
 const EmailAddressTo = configPlugin.EmailAddressTo;
 const EmailAddressFrom = configPlugin.EmailAddressFrom;
+const EmailUsername = configPlugin.EmailUsername;
 const EmailPassword = configPlugin.EmailPassword;
 const EmailHost = configPlugin.EmailHost;
 const EmailPort = configPlugin.EmailPort;
@@ -113,7 +117,7 @@ const WebSocket = require('ws');
 
 const checkInterval = 1000;
 const clientID = 'Server';
-const ServerName = sanitizeInput(config.identification.tunerName);
+const ServerName = sanitizeInput(config.identification.tunerName).replace(/%20/g, ' ');
 const webserverPort = config.webserver.webserverPort || 8080;
 const externalWsUrl = `ws://127.0.0.1:${webserverPort}`;
 
@@ -150,13 +154,14 @@ function checkAndInstallNewModules() {
 
 checkAndInstallNewModules();
 
+// Nodemailer configuration
 const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
     host: EmailHost,
     port: EmailPort,
     secure: EmailSecure,
     auth: {
-        user: EmailAddressFrom,
+        user: configPlugin.EmailUsername, // Use the EmailUsername for authentication
         pass: EmailPassword
     }
 });
@@ -410,22 +415,20 @@ function resetAlertStatus() {
 
 // Function to send email using EmailJS
 function sendEmail(subject, message, source) {
-	
-	const mailOptions = {
-		from: EmailAddressFrom,
-		to: ValidEmailAddressTo,
-		subject: subject,
-		text: message,
-	};
-	
-	transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-        return console.log('Error occurred:', error);
-		sendWebSocketNotification('error', subject, message, source);
-    }
-    // console.log('Email sent:', info.response);
-	handleEmailResponse(subject, message, source);
-	});
+    const mailOptions = {
+        from: `"DX Alert" <${configPlugin.EmailAddressFrom}>`, // Use EmailAddressFrom as the displayed name
+        to: ValidEmailAddressTo,
+        subject: subject,
+        text: message,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            return console.log('Error occurred:', error);
+            sendWebSocketNotification('error', subject, message, source);
+        }
+        handleEmailResponse(subject, message, source);
+    });
 }
 
 // Handle email response
