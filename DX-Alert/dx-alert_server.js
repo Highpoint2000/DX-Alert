@@ -161,7 +161,7 @@ const transporter = nodemailer.createTransport({
     port: EmailPort,
     secure: EmailSecure,
     auth: {
-        user: configPlugin.EmailUsername, // Use the EmailUsername for authentication
+        user: configPlugin.EmailUsername || configPlugin.EmailAddressFrom, // Use the EmailUsername for authentication
         pass: EmailPassword
     }
 });
