@@ -2,7 +2,7 @@
 ///                                                          ///
 ///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.5b)      ///
 ///                                                          ///
-///  by Highpoint                last update: 29.12.24       ///
+///  by Highpoint                last update: 30.12.24       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -37,6 +37,7 @@ const defaultConfig = {
     EmailAlert: 'off',
     EmailAddressTo: '',
     EmailAddressFrom: '',
+	EmailSenderName: '',
     EmailUsername: '', // SMTP username
     EmailPassword: '', // SMTP password
     EmailHost: 'smtp.gmail.com',
@@ -98,6 +99,7 @@ const StationModeCanLogServer = configPlugin.StationModeCanLogServer;
 const EmailAlert = configPlugin.EmailAlert;
 const EmailAddressTo = configPlugin.EmailAddressTo;
 const EmailAddressFrom = configPlugin.EmailAddressFrom;
+const EmailSenderName = configPlugin.EmailSenderName;
 const EmailUsername = configPlugin.EmailUsername;
 const EmailPassword = configPlugin.EmailPassword;
 const EmailHost = configPlugin.EmailHost;
@@ -416,7 +418,7 @@ function resetAlertStatus() {
 // Function to send email using EmailJS
 function sendEmail(subject, message, source) {
     const mailOptions = {
-        from: `"DX Alert" <${configPlugin.EmailAddressFrom}>`, // Use EmailAddressFrom as the displayed name
+        from: `"${EmailSenderName}" <${configPlugin.EmailAddressFrom}>`, // Use EmailAddressFrom as the displayed name
         to: ValidEmailAddressTo,
         subject: subject,
         text: message,
