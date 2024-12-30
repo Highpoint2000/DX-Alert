@@ -9,7 +9,7 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 ### Version 3.5b (only works from web server version 1.2.8.1 and CanLogServer version 2.0 !!!)
 
 - Fixed Problem with %20 in server name
-- EmailUsername added
+- EmailUsername & EmailSenderName added
 
 ## Installation notes:
 
