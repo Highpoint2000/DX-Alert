@@ -40,7 +40,7 @@ The following variables can be changed in the DX-Alert.json:
     EmailAlert: 'off', 			// Enable email alert feature, 'on' or 'off'
     EmailAddressTo: '', 			// Alternative email address for DX alerts, if the field remains empty, the email address of the web server will be used 
     EmailAddressFrom: '', 			// Sender email address, email address for account
-    EmailSenderName: '',		// Optional: A free name text can be entered here
+    EmailSenderName: '',			// Optional: A free name text can be entered here
     EmailUsername: '', 			// Optional: SMTP username / normally identical to EmailAddressFrom / If the field remains empty, the email address will be taken from EmailAddressFrom
     EmailPassword: '', 			// SMTP password/application-specific password 
     EmailHost: 'smtp.gmail.com', 	        // SMTP server for email, e.g. 'smtp.gmail.com' for GMAIL
