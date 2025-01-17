@@ -1,9 +1,9 @@
 (() => {
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.5b)      ///
+///  DX ALERT CLIENT SCRIPT FOR FM-DX-WEBSERVER (V3.5c)      ///
 ///                                                          ///
-///  by Highpoint                last update: 30.12.24       ///
+///  by Highpoint                last update: 17.01.25       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -17,7 +17,7 @@ const updateInfo = true; // Enable or disable version check
 
 /////////////////////////////////////////////////////////////////
 
-    const plugin_version = '3.5b';
+    const plugin_version = '3.5c';
 	const plugin_path = 'https://raw.githubusercontent.com/highpoint2000/DX-Alert/';
 	const plugin_JSfile = 'main/DX-Alert/dx-alert.js'
 	const plugin_name = 'DX Alert';
@@ -83,12 +83,14 @@ const updateInfo = true; // Enable or disable version check
             }
         }
     }
+	
+	let processingAllowed = true; // Allows message processing
 
     // Function to handle WebSocket messages
     function handleWebSocketMessage(event) {
         try {
             const eventData = JSON.parse(event.data);
-			console.log(eventData); 
+			//console.log(eventData); 
             if (eventData.type === 'DX-Alert' && eventData.source !== sessionId) {
                 let { status, EmailAlert, email, TelegramAlert, freq, dist, distMax, subject, message } = eventData.value;
 				
@@ -96,21 +98,33 @@ const updateInfo = true; // Enable or disable version check
 				if (message && message.includes("Logfile")) {
 					message = message.split("Logfile")[0].trim(); // Keep only the part before "Logfile:"
 				}
+				
+				if (!processingAllowed) {
+					return; // Ignore the message if processing is not allowed
+				}
+
+				setTimeout(() => {
+					processingAllowed = true;
+				}, 100);
 
                 switch (status) {
                     case 'success':
                         if (eventData.target === sessionId) {
 							if (EmailAlert === 'on' && TelegramAlert === 'on') {
 								sendToast('success important', 'DX-Alert', `Test email request sent to ${ValidEmailAddress} and Telegram successfully!!!`, false, false);
-								console.log("Server response: Test email request sent to ${ValidEmailAddress} and Telegram successfully.");								
+								console.log("Server response: Test email request sent to ${ValidEmailAddress} and Telegram successfully.");	
+								processingAllowed = false;								
 							} else if (EmailAlert === 'on') {
 								sendToast('success important', 'DX-Alert', `Test email request sent to ${ValidEmailAddress} successfully!!!`, false, false);
 								console.log("Server response: Test email request sent to ${ValidEmailAddress} successfully.");	
+								processingAllowed = false;
 								} else if (TelegramAlert === 'on') {
 									sendToast('success important', 'DX-Alert', `Test notification request sent to Telegram successfully!!!`, false, false);
 									console.log("Server response: Test email request sent to Telegram successfully.");
+									processingAllowed = false;
 									} else {
-										sendToast('error', 'DX-Alert', `no services are configured!`, false, false);	
+										sendToast('error', 'DX-Alert', `no services are configured!`, false, false);
+										processingAllowed = false;										
 									}
 						}
                         break;
@@ -119,31 +133,39 @@ const updateInfo = true; // Enable or disable version check
 							console.log(`DX-Alert!!! ${message} > Sent Telegram Message and email to ${email}`);
 							if (isTuneAuthenticated) {
 								sendToast('success important', 'DX-Alert', `${message} > Sent Telegram Message and email to ${email}`, false, false);
+								processingAllowed = false;
 								}
 							} else if (EmailAlert === 'on') {
 								console.log(`DX-Alert!!! ${message} > Email sent to ${email}`);
 								if (isTuneAuthenticated) {
 									sendToast('success important', 'DX-Alert', `${message} > Email sent to ${email}`, false, false);
+									processingAllowed = false;
 									}
 								} else if (TelegramAlert === 'on') {
 									console.log(`DX-Alert!!! ${message} > Sent Telegram Message`);
+									processingAllowed = false;
 									if (isTuneAuthenticated) {
 										sendToast('success important', 'DX-Alert', `${message} > Sent Telegram Message`, false, false);
+										processingAllowed = false;
 										}
 									} else {
-										sendToast('error', 'DX-Alert', `no services are configured!`, false, false);	
+										sendToast('error', 'DX-Alert', `no services are configured!`, false, false);
+										processingAllowed = false;										
 									}
                     break;
                     case 'error':
 						if (EmailAlert === 'on') {
 							console.error("Server response: Test email request failed.", message);
-							sendToast('error', 'DX-Alert', `Error! Failed to send test email to ${ValidEmailAddress}!`, false, false);							
+							sendToast('error', 'DX-Alert', `Error! Failed to send test email to ${ValidEmailAddress}!`, false, false);	
+							processingAllowed = false;							
 						} else if (TelegramAlert === 'on') {
 							console.error("Server response: Telegram Test request failed.", message);
 							sendToast('error', 'DX-Alert', `failed to send test to Telegram!`, false, false);
+							processingAllowed = false;
 							} else if (EmailAlert === 'on' && TelegramAlert === 'on') {
 								console.error("Server response: Telegram or email Test request failed.", message);
-								sendToast('error', 'DX-Alert', `failed to send test to ${ValidEmailAddress} or to Telegram!`, false, false);	
+								sendToast('error', 'DX-Alert', `failed to send test to ${ValidEmailAddress} or to Telegram!`, false, false);
+								processingAllowed = false;								
 							}
                         break;
                     case 'on':
@@ -162,14 +184,17 @@ const updateInfo = true; // Enable or disable version check
 								const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance}-${AlertDistanceMax} km / frequency: ${NewEmailFrequency} min.)` : '';
 								console.log(`${alertStatusMessage}${alertDetailsMessage}`);
 								sendToast('info', 'DX-Alert', `activated for Telegram & ${ValidEmailAddress}\n(Alert distance: ${AlertDistance}-${AlertDistanceMax} km / frequency: ${NewEmailFrequency} min.)`, false, false);
+								processingAllowed = false;
 								} else if (EmailAlert === 'on') {
 									const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance}-${AlertDistanceMax} km / frequency: ${NewEmailFrequency} min.)` : '';
 									console.log(`${alertStatusMessage}${alertDetailsMessage}`);
 									sendToast('info', 'DX-Alert', `activated for ${ValidEmailAddress}\n(Alert distance: ${AlertDistance}-${AlertDistanceMax} km / frequency: ${NewEmailFrequency} min.)`, false, false);
+									processingAllowed = false;
 									} else if (TelegramAlert === 'on') {
 										const alertDetailsMessage = AlertActive ? ` (Alert distance: ${AlertDistance}-${AlertDistanceMax} km / frequency: ${NewEmailFrequency} min.)` : '';
 										console.log(`${alertStatusMessage}${alertDetailsMessage}`);
 										sendToast('info', 'DX-Alert', `activated for Telegram\n(Alert distance: ${AlertDistance}-${AlertDistanceMax} km / frequency: ${NewEmailFrequency} min.)`, false, false);
+										processingAllowed = false;
 									}
 
 							alertShown = true;
