@@ -6,9 +6,9 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 
 
 
-## Version 3.6 (only works from web server version 1.3.5!!!)
+## Version 3.6a (only works from web server version 1.3.5!!!)
 
-- Design adjustments for web server version 1.3.5
+- Blacklist option added (blacklist.txt must be created in the dx-alert plugin folder with only frequency or frequency;PI code combination eg. 87.700 or 87.700;D3C3)
 
 ## Installation notes:
 
@@ -34,6 +34,7 @@ The following variables can be changed in the DX-Alert.json:
 	AlertDistanceMax: 2500, 		// Maximum distance for DX alarms in km (default; 2500)
     StationMode: 'off',                     // Set it 'on' to enable alarm for every new logged TX Station (default: 'off')
     StationModeCanLogServer: '',		// OPTIONAL: Activates a central server to manage alarm repetitions (e.g. '127.0.0.1:2000', default is '') - only valid if StationMode: 'on' !
+	EnableBacklist: false,					// Set it to true if you use a blacklist.txt in the DX-Alert plugin folder 
     
     //// Email Options ////
     EmailAlert: 'off', 			// Enable email alert feature, 'on' or 'off'
@@ -67,8 +68,13 @@ Please note:
 - If the alert button is active, you will also receive an email if another user of the web server receives DX stations while zapping
 - In the Netherlands and Germany there are already existing Telegram DX Alert groups ("NL FM DX Alerts" und "DE FM DX Alerts") that you can join and publish your logs. You can get further information and the tokens from me.
 - If there are several web servers, it makes sense to register the alarms that have already been sent via a central server in order to avoid duplicate alarms. The [CanLogServer](https://github.com/Highpoint2000/canlog-server) can provide this functionality. When using the server, the log interval set in DX-Alert.json is inactive because the log interval set for the server has priority!
+- blacklist.txt must be created in the dx-alert plugin folder with only frequency or frequency;PI code combination eg. 87.700 or 87.700;D3C3. Multiple entries must be one below the other.
 
 ## History: 
+
+### Version 3.6 (only works from web server version 1.3.5!!!)
+
+- Design adjustments for web server version 1.3.5
 
 ### Version 3.5c
 
