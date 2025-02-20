@@ -1,14 +1,14 @@
 (() => {
   ////////////////////////////////////////////////////////////////////
-  ///                                                            ///
-  ///  DX ALERT CLIENT SCRIPT FOR FM-DX-WEBSERVER (V3.6)         ///
-  ///                                                            ///
-  ///  by Highpoint                last update: 17.02.25          ///
-  ///                                                            ///
-  ///  Thanks to _zer0_gravity_ for the Telegram Code!           ///
-  ///                                                            ///
-  ///  https://github.com/Highpoint2000/DX-Alert                 ///
-  ///                                                            ///
+  ///                                                         	   ///
+  ///  DX ALERT CLIENT SCRIPT FOR FM-DX-WEBSERVER (V3.6a)          ///
+  ///                                                              ///
+  ///  by Highpoint                last update: 20.02.25           ///
+  ///                                                              ///
+  ///  Thanks to _zer0_gravity_ for the Telegram Code!             ///
+  ///                                                              ///
+  ///  https://github.com/Highpoint2000/DX-Alert                   ///
+  ///                                                              ///
   ////////////////////////////////////////////////////////////////////
 
   ///  This plugin only works from web server version 1.3.5 !!!
@@ -17,7 +17,7 @@
 
   /////////////////////////////////////////////////////////////////////
 
-  const plugin_version = '3.6';
+  const plugin_version = '3.6a';
   const plugin_path = 'https://raw.githubusercontent.com/highpoint2000/DX-Alert/';
   const plugin_JSfile = 'main/DX-Alert/dx-alert.js';
   const plugin_name = 'DX Alert';
