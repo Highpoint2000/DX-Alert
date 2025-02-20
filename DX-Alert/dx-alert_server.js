@@ -35,7 +35,7 @@ const defaultConfig = {
     AlertDistanceMax: 2500,					// Maximum distance for DX alarms in km (default; 2500)
     StationMode: 'off',						// Set it 'on' to enable alarm for every new logged TX Station (default: 'off')
     StationModeCanLogServer: '',			// OPTIONAL: Activates a central server to manage alarm repetitions (e.g. '127.0.0.1:2000', default is '') - only valid if StationMode: 'on' !
-    enableBacklist: false,					// Set it to true if you use a blacklist.txt in the DX-Alert plugin folder 
+    EnableBacklist: false,					// Set it to true if you use a blacklist.txt in the DX-Alert plugin folder 
     EmailAlert: 'off',						// Enable email alert feature, 'on' or 'off'				
     EmailAddressTo: '',						// Alternative email address for DX alerts, if the field remains empty, the email address of the web server will be used 
     EmailAddressFrom: '',					// Sender email address, email address for account
@@ -92,7 +92,7 @@ const configPlugin = loadConfig(configFilePath);
 
 // NEW: Helper function to check the blacklist
 function shouldTriggerAlarmBasedOnBlacklist(frequency, pi) {
-    if (!configPlugin.enableBacklist) {
+    if (!configPlugin.EnableBacklist) {
         return true; // Blacklist checking is disabled
     }
     const blacklistPath = path.join(__dirname, 'blacklist.txt');
@@ -169,7 +169,7 @@ const NewModules = ['nodemailer'];
 
 // Check if blacklist is enabled and the blacklist.txt file exists
 const blacklistFilePath = path.join(__dirname, 'blacklist.txt');
-if (configPlugin.enableBacklist && fs.existsSync(blacklistFilePath)) {
+if (configPlugin.EnableBacklist && fs.existsSync(blacklistFilePath)) {
     logInfo("DX-Alert activate blacklist.");
 }
 
@@ -334,7 +334,7 @@ function canLog(id) {
 
 // New function: Determine if there is a blacklist hit
 function getBlacklistMatchType(frequency, pi) {
-    if (!configPlugin.enableBacklist) {
+    if (!configPlugin.EnableBacklist) {
         return "none"; // Blacklist checking is disabled
     }
     const blacklistPath = path.join(__dirname, 'blacklist.txt');
