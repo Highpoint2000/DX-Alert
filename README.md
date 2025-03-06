@@ -6,9 +6,9 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 
 
 
-## Version 3.6a (only works from web server version 1.3.5!!!)
+## Version 3.6b (only works from web server version 1.3.5!!!)
 
-- Blacklist option added (blacklist.txt must be created in the dx-alert plugin folder with only frequency or frequency;PI code combination eg. 87.700 or 87.700;D3C3)
+- Active display of the DX Alert button corrected
 
 ## Installation notes:
 
@@ -71,6 +71,11 @@ Please note:
 - blacklist.txt must be created in the dx-alert plugin folder with only frequency or frequency;PI code combination eg. 87.700 or 87.700;D3C3. Multiple entries must be one below the other.
 
 ## History: 
+
+### Version 3.6a (only works from web server version 1.3.5!!!)
+
+- Blacklist option added (blacklist.txt must be created in the dx-alert plugin folder with only frequency or frequency;PI code combination eg. 87.700 or 87.700;D3C3)
+
 
 ### Version 3.6 (only works from web server version 1.3.5!!!)
 
