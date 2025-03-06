@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.6a)      ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.6b)      ///
 ///                                                          ///
-///  by Highpoint                last update: 20.02.25       ///
+///  by Highpoint                last update: 06.03.25       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
