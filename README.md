@@ -34,7 +34,7 @@ The following variables can be changed in the DX-Alert.json:
 	AlertDistanceMax: 2500, 		// Maximum distance for DX alarms in km (default; 2500)
     StationMode: 'off',                     // Set it 'on' to enable alarm for every new logged TX Station (default: 'off')
     StationModeCanLogServer: '',		// OPTIONAL: Activates a central server to manage alarm repetitions (e.g. '127.0.0.1:2000', default is '') - only valid if StationMode: 'on' !
-	EnableBacklist: false,					// Set it to true if you use a blacklist.txt in the DX-Alert plugin folder 
+	EnableBacklist: false,			// Set it to true if you use a blacklist.txt in the DX-Alert plugin folder 
     
     //// Email Options ////
     EmailAlert: 'off', 			// Enable email alert feature, 'on' or 'off'
