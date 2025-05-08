@@ -58,10 +58,6 @@ The following variables can be changed in the DX-Alert.json:
 
 To use the plugin, you must enter a valid email address in the web server or the configuration file, activate the email service and enter your provider's email settings for the SMTP server. If you want to use Telegram, you must enter the corresponding chat token of the Telegram group and the token of the Telegram bot (which must be a member of the Telegram group). You also have the option of entering an individual notification interval in minutes and a distance in km in the header of the server script from when the plugin should notify you. If you enter 0 minutes you will be notified of every DX protocol. After entering or changing the values, the server must be restarted! The plugin can only be activated as an authenticated user or as an admin. After registering, you can send a test email to the registered address or a test message to the Telegram group by pressing and holding the DX Alert button. The plugin is a useful addition to the [Scanner Plugin](https://github.com/Highpoint2000/webserver-scanner), so that you are always informed in the background when the reception conditions change positively!
 
-Users who also use the Extended Description plugin should download the modified version here, which displays the buttons in one line: https://github.com/Highpoint2000/Extended-Description-plugin-MOD-by-Highpoint-
-
-![image](https://github.com/user-attachments/assets/18a0eae5-af68-4b81-875a-07e385517c79)
-
 Please note:
 
 - The plugin does not log receptions. Only the first station found, above the entered kilometer limit and time interval, will be sent with detailed information as an indication of overreach!
