@@ -66,7 +66,14 @@ Please note:
 - If there are several web servers, it makes sense to register the alarms that have already been sent via a central server in order to avoid duplicate alarms. The [CanLogServer](https://github.com/Highpoint2000/canlog-server) can provide this functionality. When using the server, the log interval set in DX-Alert.json is inactive because the log interval set for the server has priority!
 - blacklist.txt must be created in the dx-alert plugin folder with only frequency or frequency;PI code combination eg. 87.700 or 87.700;D3C3. Multiple entries must be one below the other.
 
-## History: 
+## Contact
+
+If you have any questions, would like to report problems, or have suggestions for improvement, please feel free to contact me! You can reach me by email at highpoint2000@googlemail.com. I look forward to hearing from you!
+
+<a href="https://www.buymeacoffee.com/Highpoint" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
+<details>
+<summary>History</summary>
 
 ### Version 3.6a (only works from web server version 1.3.5!!!)
 
