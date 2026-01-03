@@ -2,9 +2,7 @@
 
 This plugin provides email notifications and Telegram Messages for DX reception with the FM-DX web server depending on a selected distance and frequency.
 
-![image](https://github.com/user-attachments/assets/e10a6fba-4514-4c1a-a41f-4a3ae0435449)
-
-
+<img width="1261" height="800" alt="grafik" src="https://github.com/user-attachments/assets/29c6da18-d18f-43de-8deb-59184cbb4ce3" />
 
 ## Version 3.6c (only works from web server version 1.3.5!!!)
 
