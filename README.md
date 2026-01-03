@@ -30,31 +30,31 @@ The following variables can be changed in the DX-Alert.json:
     AlertFrequency: 30, 			// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent (default: 30)
     AlertDistance: 250, 			// Distance for DX alarms in km (default: 250)
 	AlertDistanceMax: 2500, 		// Maximum distance for DX alarms in km (default; 2500)
-    StationMode: 'off',                     // Set it 'on' to enable alarm for every new logged TX Station (default: 'off')
-    StationModeCanLogServer: '',		// OPTIONAL: Activates a central server to manage alarm repetitions (e.g. '127.0.0.1:2000', default is '') - only valid if StationMode: 'on' !
+    StationMode: 'off',             // Set it 'on' to enable alarm for every new logged TX Station (default: 'off')
+    StationModeCanLogServer: '',    // OPTIONAL: Activates a central server to manage alarm repetitions (e.g. '127.0.0.1:2000', default is '') - only valid if StationMode: 'on' !
 	EnableBacklist: false,			// Set it to true if you use a blacklist.txt in the DX-Alert plugin folder 
     
     //// Email Options ////
-    EmailAlert: 'off', 			// Enable email alert feature, 'on' or 'off'
+    EmailAlert: 'off', 			    // Enable email alert feature, 'on' or 'off'
     EmailAddressTo: '', 			// Alternative email address(es) for DX alerts, if the field remains empty, the email address of the web server will be used. Separate multiple email addresses with a comma. 
     EmailAddressFrom: '', 			// Sender email address, email address for account
     EmailSenderName: '',			// Optional: A free name text can be entered here
-    EmailUsername: '', 			// Optional: SMTP username / normally identical to EmailAddressFrom / If the field remains empty, the email address will be taken from EmailAddressFrom
-    EmailPassword: '', 			// SMTP password/application-specific password 
-    EmailHost: 'smtp.gmail.com', 	        // SMTP server for email, e.g. 'smtp.gmail.com' for GMAIL
-    EmailPort: '587', 			// Port for email server, e.g. '587' for GMAIL
+    EmailUsername: '', 			    // Optional: SMTP username / normally identical to EmailAddressFrom / If the field remains empty, the email address will be taken from EmailAddressFrom
+    EmailPassword: '', 			    // SMTP password/application-specific password 
+    EmailHost: 'smtp.gmail.com', 	// SMTP server for email, e.g. 'smtp.gmail.com' for GMAIL
+    EmailPort: '587', 			    // Port for email server, e.g. '587' for GMAIL
     EmailSecure: false, 			// Whether to use secure connection (true for port 465, false for other ports)
     
     //// Telegram Options ////
     TelegramAlert: 'off', 			// Telegram alert feature, 'on' or 'off'
-    TelegramToken: '', 			// Telegram bot token
+    TelegramToken: '', 			    // Telegram bot token
     TelegramChatId: '', 			// Telegram chat ID for sending alerts
     TelegramToken2: '', 			// Telegram bot token 2
     TelegramChatId2: '' 			// Telegram chat ID 2 for sending alerts
 
 ## Notes: 
 
-To use the plugin, you must enter a valid email address in the web server or the configuration file, activate the email service and enter your provider's email settings for the SMTP server. If you want to use Telegram, you must enter the corresponding chat token of the Telegram group and the token of the Telegram bot (which must be a member of the Telegram group). You also have the option of entering an individual notification interval in minutes and a distance in km in the header of the server script from when the plugin should notify you. If you enter 0 minutes you will be notified of every DX protocol. After entering or changing the values, the server must be restarted! The plugin can only be activated as an authenticated user or as an admin. After registering, you can send a test email to the registered address or a test message to the Telegram group by pressing and holding the DX Alert button. The plugin is a useful addition to the [Scanner Plugin](https://github.com/Highpoint2000/webserver-scanner), so that you are always informed in the background when the reception conditions change positively!
+To use the plugin, you must enter one or more (comma separated) valid email address in the configuration file, activate the email service and enter your provider's email settings for the SMTP server. If you want to use Telegram, you must enter the corresponding chat token of the Telegram group and the token of the Telegram bot (which must be a member of the Telegram group). You also have the option of entering an individual notification interval in minutes and a distance in km in the header of the server script from when the plugin should notify you. If you enter 0 minutes you will be notified of every DX protocol. After entering or changing the values, the server must be restarted! The plugin can only be activated as an authenticated user or as an admin. After registering, you can send a test email to the registered address or a test message to the Telegram group by pressing and holding the DX Alert button. The plugin is a useful addition to the [Scanner Plugin](https://github.com/Highpoint2000/webserver-scanner), so that you are always informed in the background when the reception conditions change positively!
 
 Please note:
 
