@@ -6,9 +6,9 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 
 
 
-## Version 3.6b (only works from web server version 1.3.5!!!)
+## Version 3.6c (only works from web server version 1.3.5!!!)
 
-- Active display of the DX Alert button corrected
+- Multiple email addresses can be separated by commas; now being processed
 
 ## Installation notes:
 
@@ -38,7 +38,7 @@ The following variables can be changed in the DX-Alert.json:
     
     //// Email Options ////
     EmailAlert: 'off', 			// Enable email alert feature, 'on' or 'off'
-    EmailAddressTo: '', 			// Alternative email address for DX alerts, if the field remains empty, the email address of the web server will be used 
+    EmailAddressTo: '', 			// Alternative email address(es) for DX alerts, if the field remains empty, the email address of the web server will be used. Separate multiple email addresses with a comma. 
     EmailAddressFrom: '', 			// Sender email address, email address for account
     EmailSenderName: '',			// Optional: A free name text can be entered here
     EmailUsername: '', 			// Optional: SMTP username / normally identical to EmailAddressFrom / If the field remains empty, the email address will be taken from EmailAddressFrom
@@ -74,6 +74,10 @@ If you have any questions, would like to report problems, or have suggestions fo
 
 <details>
 <summary>History</summary>
+
+### Version 3.6b (only works from web server version 1.3.5!!!)
+
+- Active display of the DX Alert button corrected
 
 ### Version 3.6a (only works from web server version 1.3.5!!!)
 

@@ -1,9 +1,9 @@
 (() => {
   ////////////////////////////////////////////////////////////////////
   ///                                                         	   ///
-  ///  DX ALERT CLIENT SCRIPT FOR FM-DX-WEBSERVER (V3.6b)          ///
+  ///  DX ALERT CLIENT SCRIPT FOR FM-DX-WEBSERVER (V3.6c)          ///
   ///                                                              ///
-  ///  by Highpoint                last update: 06.03.25           ///
+  ///  by Highpoint                last update: 03.01.26           ///
   ///                                                              ///
   ///  Thanks to _zer0_gravity_ for the Telegram Code!             ///
   ///                                                              ///
@@ -17,7 +17,7 @@
 
   /////////////////////////////////////////////////////////////////////
 
-  const plugin_version = '3.6a';
+  const plugin_version = '3.6c';
   const plugin_path = 'https://raw.githubusercontent.com/highpoint2000/DX-Alert/';
   const plugin_JSfile = 'main/DX-Alert/dx-alert.js';
   const plugin_name = 'DX Alert';
@@ -26,7 +26,7 @@
   let wsSendSocket;
   let pressTimer;
   let buttonPressStarted = null; // Timestamp for button press start
-  let ValidEmailAddress = null; // Email address for alerts
+  let ValidEmailAddress = null; // Email address for alerts (can be comma-separated list)
   let NewEmailFrequency = null;
   let AlertDistance = null;
   let AlertDistanceMax = null;
@@ -39,9 +39,6 @@
   let sessionId = Math.floor(Math.random() * 1e12)
     .toString()
     .padStart(12, '0'); // Generates a 12-digit random session ID
-
-  // (ipApiUrl is no longer used)
-  const ipApiUrl = 'https://api.ipify.org?format=json';
 
   let checkSuccessTimer;
 
@@ -90,61 +87,116 @@
 
   let processingAllowed = true; // Allow message processing
 
-  // Function to handle WebSocket messages
-// Funktion zur Verarbeitung eingehender WebSocket-Nachrichten
-function handleWebSocketMessage(event) {
-  try {
-    const eventData = JSON.parse(event.data);
-    if (eventData.type === 'DX-Alert' && eventData.source !== sessionId) {
+  // Function to handle incoming WebSocket messages
+  function handleWebSocketMessage(event) {
+    try {
+      const eventData = JSON.parse(event.data);
+      if (eventData.type === 'DX-Alert' && eventData.source !== sessionId) {
 
-      // WICHTIG: Überprüfe, ob der Button bereits im DOM existiert.
-      const btn = document.getElementById('DX-Alert-on-off');
-      if (!btn) {
-        // Falls der Button noch nicht existiert, verzögere die Verarbeitung.
-        setTimeout(() => handleWebSocketMessage(event), 500);
-        return;
-      }
+        // IMPORTANT: Check if the button already exists in the DOM.
+        const btn = document.getElementById('DX-Alert-on-off');
+        if (!btn) {
+          // If the button does not exist yet, delay processing.
+          setTimeout(() => handleWebSocketMessage(event), 500);
+          return;
+        }
 
-      // Optional: Throttling, um Mehrfachverarbeitungen zu vermeiden
-      const currentTime = Date.now();
-      if (
-        !handleWebSocketMessage.lastProcessedTime ||
-        currentTime - handleWebSocketMessage.lastProcessedTime >= 1000
-      ) {
-        handleWebSocketMessage.lastProcessedTime = currentTime;
+        // Optional: Throttling to prevent multiple processings
+        const currentTime = Date.now();
+        if (
+          !handleWebSocketMessage.lastProcessedTime ||
+          currentTime - handleWebSocketMessage.lastProcessedTime >= 1000
+        ) {
+          handleWebSocketMessage.lastProcessedTime = currentTime;
 
-        const { status, email, TelegramAlert, EmailAlert, freq, dist, distMax, message } = eventData.value;
+          const { status, email, TelegramAlert, EmailAlert, freq, dist, distMax, message } = eventData.value;
 
-        switch (status) {
-          case 'success':
-            if (eventData.target === sessionId) {
+          switch (status) {
+            case 'success':
+              if (eventData.target === sessionId) {
+                if (EmailAlert === 'on' && TelegramAlert === 'on') {
+                  sendToast(
+                    'success important',
+                    'DX-Alert',
+                    `Test email request sent to ${ValidEmailAddress} and Telegram successfully!!!`,
+                    false,
+                    false
+                  );
+                  console.log("Server response: Test email request sent to both services.");
+                } else if (EmailAlert === 'on') {
+                  sendToast(
+                    'success important',
+                    'DX-Alert',
+                    `Test email request sent to ${ValidEmailAddress} successfully!!!`,
+                    false,
+                    false
+                  );
+                  console.log("Server response: Test email request sent to email service.");
+                } else if (TelegramAlert === 'on') {
+                  sendToast(
+                    'success important',
+                    'DX-Alert',
+                    `Test notification request sent to Telegram successfully!!!`,
+                    false,
+                    false
+                  );
+                  console.log("Server response: Test notification request sent to Telegram.");
+                } else {
+                  sendToast(
+                    'error',
+                    'DX-Alert',
+                    `No services are configured!`,
+                    false,
+                    false
+                  );
+                }
+              }
+              break;
+
+            case 'sent':
+              // Clean the message: Remove the Logfile link part for the toast
+              // The server sends "Text... \n\nLogfile: URL". We split and take the first part.
+              let cleanMessage = message;
+              if (message.includes("Logfile:")) {
+                cleanMessage = message.split("Logfile:")[0].trim();
+              }
+
+              // Format the email list (replace comma with comma+break for better readability in toast)
+              let formattedEmails = email ? email.replace(/, /g, ',<br>') : '';
+
               if (EmailAlert === 'on' && TelegramAlert === 'on') {
-                sendToast(
-                  'success important',
-                  'DX-Alert',
-                  `Test email request sent to ${ValidEmailAddress} and Telegram successfully!!!`,
-                  false,
-                  false
-                );
-                console.log("Server response: Test email request sent to both services.");
+                console.log(`DX-Alert: ${cleanMessage} > Sent Telegram Message and email to ${email}`);
+                if (isTuneAuthenticated) {
+                  sendToast(
+                    'success important',
+                    'DX-Alert',
+                    `${cleanMessage}<br><br><b>Telegram & Email sent to:</b><br>${formattedEmails}`,
+                    false,
+                    false
+                  );
+                }
               } else if (EmailAlert === 'on') {
-                sendToast(
-                  'success important',
-                  'DX-Alert',
-                  `Test email request sent to ${ValidEmailAddress} successfully!!!`,
-                  false,
-                  false
-                );
-                console.log("Server response: Test email request sent to email service.");
+                console.log(`DX-Alert: ${cleanMessage} > Email sent to ${email}`);
+                if (isTuneAuthenticated) {
+                  sendToast(
+                    'success important',
+                    'DX-Alert',
+                    `${cleanMessage}<br><br><b>Email sent to:</b><br>${formattedEmails}`,
+                    false,
+                    false
+                  );
+                }
               } else if (TelegramAlert === 'on') {
-                sendToast(
-                  'success important',
-                  'DX-Alert',
-                  `Test notification request sent to Telegram successfully!!!`,
-                  false,
-                  false
-                );
-                console.log("Server response: Test notification request sent to Telegram.");
+                console.log(`DX-Alert: ${cleanMessage} > Sent Telegram Message`);
+                if (isTuneAuthenticated) {
+                  sendToast(
+                    'success important',
+                    'DX-Alert',
+                    `${cleanMessage}<br><br><b>Sent Telegram Message</b>`,
+                    false,
+                    false
+                  );
+                }
               } else {
                 sendToast(
                   'error',
@@ -154,115 +206,69 @@ function handleWebSocketMessage(event) {
                   false
                 );
               }
-            }
-            break;
+              break;
 
-          case 'sent':
-            if (EmailAlert === 'on' && TelegramAlert === 'on') {
-              console.log(`DX-Alert: ${message} > Sent Telegram Message and email to ${email}`);
-              if (isTuneAuthenticated) {
+            case 'error':
+              if (EmailAlert === 'on') {
+                console.error("Server response: Test email request failed.", message);
                 sendToast(
-                  'success important',
+                  'error',
                   'DX-Alert',
-                  `${message} > Sent Telegram Message and email to ${email}`,
+                  `Error! Failed to send test email to ${ValidEmailAddress}!`,
+                  false,
+                  false
+                );
+              } else if (TelegramAlert === 'on') {
+                console.error("Server response: Telegram test request failed.", message);
+                sendToast('error', 'DX-Alert', `Failed to send test to Telegram!`, false, false);
+              }
+              break;
+
+            case 'on':
+            case 'off':
+              ValidEmailAddress = email;
+              // Set button status (ensures adding/removing the "active" class)
+              setButtonStatus(status === 'on');
+              AlertActive = status === 'on';
+              NewEmailFrequency = freq;
+              AlertDistance = dist;
+              AlertDistanceMax = distMax;
+
+              if (
+                isTuneAuthenticated &&
+                status === 'on' &&
+                (eventData.target === '000000000000' || eventData.target === sessionId)
+              ) {
+                const alertStatusMessage = `DX ALERT ${AlertActive ? 'activated' : 'deactivated'}`;
+                let detailsMessage = '';
+                if (AlertActive) {
+                  detailsMessage = ` (Alert distance: ${AlertDistance}-${AlertDistanceMax} km / frequency: ${NewEmailFrequency} min.)`;
+                }
+                console.log(`${alertStatusMessage}${detailsMessage}`);
+                sendToast(
+                  'info',
+                  'DX-Alert',
+                  AlertActive
+                    ? `Activated for ${EmailAlert === 'on' ? ValidEmailAddress : 'Telegram'}${detailsMessage}`
+                    : 'Deactivated',
                   false,
                   false
                 );
               }
-            } else if (EmailAlert === 'on') {
-              console.log(`DX-Alert: ${message} > Email sent to ${email}`);
-              if (isTuneAuthenticated) {
-                sendToast(
-                  'success important',
-                  'DX-Alert',
-                  `${message} > Email sent to ${email}`,
-                  false,
-                  false
-                );
-              }
-            } else if (TelegramAlert === 'on') {
-              console.log(`DX-Alert: ${message} > Sent Telegram Message`);
-              if (isTuneAuthenticated) {
-                sendToast(
-                  'success important',
-                  'DX-Alert',
-                  `${message} > Sent Telegram Message`,
-                  false,
-                  false
-                );
-              }
-            } else {
-              sendToast(
-                'error',
-                'DX-Alert',
-                `No services are configured!`,
-                false,
-                false
-              );
-            }
-            break;
-
-          case 'error':
-            if (EmailAlert === 'on') {
-              console.error("Server response: Test email request failed.", message);
-              sendToast(
-                'error',
-                'DX-Alert',
-                `Error! Failed to send test email to ${ValidEmailAddress}!`,
-                false,
-                false
-              );
-            } else if (TelegramAlert === 'on') {
-              console.error("Server response: Telegram test request failed.", message);
-              sendToast('error', 'DX-Alert', `Failed to send test to Telegram!`, false, false);
-            }
-            break;
-
-          case 'on':
-          case 'off':
-            ValidEmailAddress = email;
-            // Button-Status setzen (sorgt für Hinzufügen/Entfernen der Klasse "active")
-            setButtonStatus(status === 'on');
-            AlertActive = status === 'on';
-            NewEmailFrequency = freq;
-            AlertDistance = dist;
-            AlertDistanceMax = distMax;
-
-            if (
-              isTuneAuthenticated &&
-              status === 'on' &&
-              (eventData.target === '000000000000' || eventData.target === sessionId)
-            ) {
-              const alertStatusMessage = `DX ALERT ${AlertActive ? 'activated' : 'deactivated'}`;
-              let detailsMessage = '';
-              if (AlertActive) {
-                detailsMessage = ` (Alert distance: ${AlertDistance}-${AlertDistanceMax} km / frequency: ${NewEmailFrequency} min.)`;
-              }
-              console.log(`${alertStatusMessage}${detailsMessage}`);
-              sendToast(
-                'info',
-                'DX-Alert',
-                AlertActive
-                  ? `Activated for ${EmailAlert === 'on' ? ValidEmailAddress : 'Telegram'}${detailsMessage}`
-                  : 'Deactivated',
-                false,
-                false
-              );
-            }
-            break;
+              break;
+          }
+        } else {
+          console.log("Throttling: Ignored message due to time limit.");
         }
-      } else {
-        console.log("Throttling: Ignored message due to time limit.");
       }
-    }
 
-    if (checkSuccessTimer) {
-      clearTimeout(checkSuccessTimer);
+      if (checkSuccessTimer) {
+        clearTimeout(checkSuccessTimer);
+      }
+    } catch (error) {
+      console.error("Error handling WebSocket message:", error);
     }
-  } catch (error) {
-    console.error("Error handling WebSocket message:", error);
   }
-}
 
 
   // Function to send an initial WebSocket message with the session ID

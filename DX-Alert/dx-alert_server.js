@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.6b)      ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.6c)      ///
 ///                                                          ///
-///  by Highpoint                last update: 06.03.25       ///
+///  by Highpoint                last update: 03.01.26       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -29,27 +29,27 @@ const configFilePath = path.join(__dirname, './../../plugins_configs/DX-Alert.js
 
 // Default values for the configuration file
 const defaultConfig = {
-    Scanner_URL_PORT: '',					// OPTIONAL: External Webserver URL for Scanner Logfile Download (if plugin installed) e.g. 'http://fmdx.ddns.net:9080'
-    AlertFrequency: 30,						// Frequency for new alerts in minutes, 0 minutes means that every entry found will be sent (default: 30)
-    AlertDistance: 250,						// Distance for DX alarms in km (default: 250)
-    AlertDistanceMax: 2500,					// Maximum distance for DX alarms in km (default; 2500)
-    StationMode: 'off',						// Set it 'on' to enable alarm for every new logged TX Station (default: 'off')
-    StationModeCanLogServer: '',			// OPTIONAL: Activates a central server to manage alarm repetitions (e.g. '127.0.0.1:2000', default is '') - only valid if StationMode: 'on' !
-    EnableBacklist: false,					// Set it to true if you use a blacklist.txt in the DX-Alert plugin folder 
-    EmailAlert: 'off',						// Enable email alert feature, 'on' or 'off'				
-    EmailAddressTo: '',						// Alternative email address for DX alerts, if the field remains empty, the email address of the web server will be used 
-    EmailAddressFrom: '',					// Sender email address, email address for account
-    EmailSenderName: '',					// Optional: A free name text can be entered here
-    EmailUsername: '', 						// Optional: SMTP username / normally identical to EmailAddressFrom / If the field remains empty, the email address will be taken from EmailAddressFrom
-    EmailPassword: '', 						// SMTP password/application-specific password 
-    EmailHost: 'smtp.gmail.com',			// SMTP server for email, e.g. 'smtp.gmail.com' for GMAIL
-    EmailPort: '587',						// Port for email server, e.g. '587' for GMAIL
-    EmailSecure: false,						// Whether to use secure connection (true for port 465, false for other ports)
-    TelegramAlert: 'off',					// Telegram alert feature, 'on' or 'off'
+    Scanner_URL_PORT: '',					// OPTIONAL: External Webserver URL for Scanner Logfile Download
+    AlertFrequency: 30,						// Frequency for new alerts in minutes
+    AlertDistance: 250,						// Distance for DX alarms in km
+    AlertDistanceMax: 2500,					// Maximum distance for DX alarms in km
+    StationMode: 'off',						// Set it 'on' to enable alarm for every new logged TX Station
+    StationModeCanLogServer: '',			// OPTIONAL: Activates a central server to manage alarm repetitions
+    EnableBacklist: false,					// Set it to true if you use a blacklist.txt
+    EmailAlert: 'off',						// Enable email alert feature
+    EmailAddressTo: '',						// Alternative email address(es) for DX alerts (comma separated)
+    EmailAddressFrom: '',					// Sender email address
+    EmailSenderName: '',					// Optional: Sender name
+    EmailUsername: '', 						// Optional: SMTP username
+    EmailPassword: '', 						// SMTP password
+    EmailHost: 'smtp.gmail.com',			// SMTP server
+    EmailPort: '587',						// SMTP port
+    EmailSecure: false,						// Secure connection
+    TelegramAlert: 'off',					// Telegram alert feature
     TelegramToken: '',						// Telegram bot token
-    TelegramChatId: '',						// Telegram chat ID for sending alerts
+    TelegramChatId: '',						// Telegram chat ID
     TelegramToken2: '',						// Telegram bot token 2
-    TelegramChatId2: ''						// Telegram chat ID 2 for sending alerts
+    TelegramChatId2: ''						// Telegram chat ID 2
 };
 
 // Function to merge default configuration with an existing configuration
@@ -90,7 +90,7 @@ function loadConfig(filePath) {
 
 const configPlugin = loadConfig(configFilePath);
 
-// NEW: Helper function to check the blacklist
+// Helper function to check the blacklist
 function shouldTriggerAlarmBasedOnBlacklist(frequency, pi) {
     if (!configPlugin.EnableBacklist) {
         return true; // Blacklist checking is disabled
@@ -146,17 +146,14 @@ const TelegramChatId2 = configPlugin.TelegramChatId2;
 const config = require('./../../config.json');
 const WebSocket = require('ws');
 
-const checkInterval = 1000;
 const clientID = 'Server';
 const ServerName = sanitizeInput(config.identification.tunerName).replace(/%20/g, ' ');
 const webserverPort = config.webserver.webserverPort || 8080;
 const externalWsUrl = `ws://127.0.0.1:${webserverPort}`;
 
 let currentStatus = 'off';
-let lastStatus = 'off';
 if (EmailAlert === 'on' || TelegramAlert === 'on') {
     currentStatus = 'on';
-    lastStatus = 'on';
 }
 let lastAlertTime = Date.now();
 let lastAlertMessage = "";
@@ -203,26 +200,49 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+// Validate one or more email addresses
 function validateEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
+    
+    // Check for comma separated list
+    if (email.includes(',')) {
+        const emails = email.split(',');
+        // All parts must be valid
+        return emails.every(e => re.test(e.trim()));
+    }
+    
+    return re.test(email.trim());
 }
 
+// Get valid email string (single or comma-separated)
 function getValidEmail() {
-    if (validateEmail(EmailAddressTo)) {
-        return EmailAddressTo;
+    if (EmailAddressTo) {
+        // Split, clean, and validate
+        const emails = EmailAddressTo.split(/[,;]/).map(e => e.trim()).filter(e => e !== '');
+        const validEmails = emails.filter(email => {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        });
+        
+        if (validEmails.length > 0) {
+            return validEmails.join(', ');
+        }
     }
-    if (!EmailAddressTo && validateEmail(config.identification.contact)) {
-        return config.identification.contact;
+    
+    // Fallback to webserver contact
+    const contact = config.identification.contact;
+    if (contact && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact)) {
+        return contact;
     }
+    
     return '';
 }
 
 const ValidEmailAddressTo = getValidEmail();
 
+// Check if valid email exists
 if (ValidEmailAddressTo === '' && EmailAlert === 'on') {
-    logError("DX-Alert: No valid email address found. DX ALERT not started.");
-    return;
+    logError("DX-Alert: No valid email address found. DX ALERT not started for Email.");
 }
 
 function createMessage(status, source) {
@@ -263,18 +283,13 @@ async function setupTextSocket() {
 // Function to fetch and update the LogInterval for DX-Alert
 async function getLogInterval() {
     try {
-        // Send a GET request to the server endpoint
         const response = await fetch(`http://${StationModeCanLogServer}/loginterval/dxalert`);
 
-        // Check if the request was successful
         if (!response.ok) {
             throw new Error(`HTTP Error! Status: ${response.status}`);
         }
 
-        // Parse the JSON object from the server response
         const data = await response.json();
-
-        // Access and use the LogInterval_DXALERT value
         const logIntervalDXALERT = data.LogInterval_DXALERT;
         AlertFrequency = logIntervalDXALERT;
 		
@@ -296,7 +311,6 @@ async function getLogInterval() {
 // Server function to check if the ID has been logged recently
 async function CanLogServer(id) {
     try {
-        // Send a POST request to the Express server
         const response = await fetch(`http://${StationModeCanLogServer}/dxalert/${id}`, {
             method: 'POST',
             headers: {
@@ -304,7 +318,6 @@ async function CanLogServer(id) {
             },
         });
 
-        // Check the HTTP status code
         if (response.ok) {
             return true; // Station was logged recently
         } else {
@@ -324,7 +337,7 @@ function canLog(id) {
 	if (AlertFrequency === '' || AlertFrequency === undefined) {
 		AlertFrequency = 60;
 	}
-    const alertIntervalMs = AlertFrequency * 60 * 1000; // AlertFrequency minutes in milliseconds
+    const alertIntervalMs = AlertFrequency * 60 * 1000;
     if (logHistory[id] && (now - logHistory[id]) < alertIntervalMs) {
         return false;
     }
@@ -332,24 +345,23 @@ function canLog(id) {
     return true;
 }
 
-// New function: Determine if there is a blacklist hit
+// Determine if there is a blacklist hit
 function getBlacklistMatchType(frequency, pi) {
     if (!configPlugin.EnableBacklist) {
-        return "none"; // Blacklist checking is disabled
+        return "none";
     }
     const blacklistPath = path.join(__dirname, 'blacklist.txt');
     if (!fs.existsSync(blacklistPath)) {
-        return "none"; // No blacklist available
+        return "none";
     }
     try {
         const data = fs.readFileSync(blacklistPath, 'utf8');
         const lines = data.split(/\r?\n/).map(line => line.trim()).filter(line => line !== '');
         const fullEntry = frequency + ';' + pi;
-        // Hit: exact combination
+        
         if (lines.includes(fullEntry)) {
             return "frequency+pi";
         }
-        // Hit: frequency only
         if (lines.includes(String(frequency))) {
             return "frequency";
         }
@@ -379,7 +391,7 @@ async function handleTextSocketMessage(event) {
         if (currentStatus === 'on' && distance > AlertDistance && distance < AlertDistanceMax) {
             if (processingAlert) return;
 
-            // New Blacklist Check: Determine if there is a match
+            // Blacklist Check
             const blacklistMatch = getBlacklistMatchType(frequency, picode);
             if (blacklistMatch !== "none") {
                 const key = frequency + (blacklistMatch === "frequency+pi" ? (';' + picode) : '');
@@ -460,7 +472,10 @@ async function handleTextSocketMessage(event) {
                 if (TelegramAlert === 'on') {
                     sendTelegram(subject, message_link);
                 }
+                
+                // Restored: Log the reception event in the server log
                 logInfo(subject);
+                
                 lastAlertTime = now;
                 lastAlertMessage = message;
 
@@ -486,9 +501,14 @@ function resetAlertStatus() {
 
 // Function to send email using Nodemailer
 function sendEmail(subject, message, source) {
+    if (!ValidEmailAddressTo) {
+        if (source) sendWebSocketNotification('error', subject, "No valid email recipients", source);
+        return;
+    }
+
     const mailOptions = {
         from: `"${EmailSenderName}" <${configPlugin.EmailAddressFrom}>`,
-        to: ValidEmailAddressTo,
+        to: ValidEmailAddressTo, // Supports "email1, email2"
         subject: subject,
         text: message,
     };
@@ -508,7 +528,6 @@ function handleEmailResponse(subject, message, source) {
     if (subject === 'DX ALERT Test') {
         logInfo(`DX-Alert responding with email test success`);
         sendWebSocketNotification('success', subject, message, source);
-		console.log('a');
     } else {
         logInfo(`DX-Alert email sent to ${ValidEmailAddressTo}`);
         sendWebSocketNotification('sent', subject, message, source);
@@ -551,7 +570,6 @@ function handleTelegramResponse(subject, message, source) {
     if (subject === 'DX ALERT Test') {
         logInfo(`DX-Alert responding with Telegram test success`);
         sendWebSocketNotification('success', subject, message, source);
-		console.log('b');
     } else {
         logInfo(`DX-Alert message sent to Telegram`);
         sendWebSocketNotification('sent', subject, message, source);
@@ -572,7 +590,7 @@ function sendWebSocketNotification(status, subject, message, source) {
                 message: message,
             },
             source: clientID,
-            target: source
+            target: source // Can be undefined, which is fine for broadcasts
         };
         try {
             data_pluginsWs.send(JSON.stringify(notification));
@@ -586,9 +604,10 @@ function sendWebSocketNotification(status, subject, message, source) {
 
 // Connect to the main WebSocket server
 function connectToWebSocket() {
-    if (EmailAlert === 'on' && !ValidEmailAddressTo.includes('@')) {
-        logError("Email address not set or invalid format! DX ALERT not started.");
-        return;
+    if (EmailAlert === 'on' && !ValidEmailAddressTo) {
+        logError("Email address not set or invalid format! DX ALERT not started (for Email).");
+        // Don't return if Telegram is enabled
+        if (TelegramAlert !== 'on') return; 
     }
 
     const ws = new WebSocket(externalWsUrl + '/data_plugins');
