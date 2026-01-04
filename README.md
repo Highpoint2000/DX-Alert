@@ -6,7 +6,7 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 
 ## Version 3.6c (only works from web server version 1.3.5!!!)
 
-- Multiple email addresses can be separated by commas; now being processed (e.g.  "email1@gmail.com,email2@gmail.com")
+- Multiple email addresses can be separated by commas; now being processed (e.g.  'email1@gmail.com,email2@gmail.com')
 
 ## Installation notes:
 
@@ -36,7 +36,7 @@ The following variables can be changed in the DX-Alert.json:
     
     //// Email Options ////
     EmailAlert: 'off', 			    // Enable email alert feature, 'on' or 'off'
-    EmailAddressTo: '', 			// Alternative email address(es) for DX alerts, if the field remains empty, the email address of the web server will be used. Separate multiple email addresses with a comma. 
+    EmailAddressTo: '', 			// Alternative email address(es) for DX alerts, if the field remains empty, the email address of the web server will be used. Separate multiple email addresses with a comma (e.g.  'email1@gmail.com,email2@gmail.com'). 
     EmailAddressFrom: '', 			// Sender email address, email address for account
     EmailSenderName: '',			// Optional: A free name text can be entered here
     EmailUsername: '', 			    // Optional: SMTP username / normally identical to EmailAddressFrom / If the field remains empty, the email address will be taken from EmailAddressFrom
