@@ -6,7 +6,7 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 
 ## Version 3.6c (only works from web server version 1.3.5!!!)
 
-- Multiple email addresses can be separated by commas; now being processed
+- Multiple email addresses can be separated by commas; now being processed (e.g.  "email1@gmail.com,email2@gmail.com")
 
 ## Installation notes:
 
