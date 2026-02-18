@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////
 ///                                                          ///
-///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.6c)      ///
+///  DX ALERT SERVER SCRIPT FOR FM-DX-WEBSERVER (V3.7)      ///
 ///                                                          ///
-///  by Highpoint                last update: 03.01.26       ///
+///  by Highpoint                last update: 18.02.26       ///
 ///                                                          ///
 ///  Thanks to _zer0_gravity_ for the Telegram Code!         ///
 ///                                                          ///
@@ -17,7 +17,9 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const { logInfo, logError, logDebug } = require('./../../server/console');
-const FmlistLogURL = 'http://127.0.0.1:4080/log_fmlist';
+
+// Load main config.json earlier to get port for screenshot URL
+const config = require('./../../config.json');
 
 // Sanitize input by encoding critical characters for safe usage
 function sanitizeInput(input) {
@@ -36,6 +38,9 @@ const defaultConfig = {
     StationMode: 'off',						// Set it 'on' to enable alarm for every new logged TX Station
     StationModeCanLogServer: '',			// OPTIONAL: Activates a central server to manage alarm repetitions
     EnableBacklist: false,					// Set it to true if you use a blacklist.txt
+    ScreenshotAlert: 'off',                 // Enable screenshot feature
+    ScreenshotWidth: 1280,                  // Width of the screenshot
+    ScreenshotHeight: 900,                  // Height of the screenshot
     EmailAlert: 'off',						// Enable email alert feature
     EmailAddressTo: '',						// Alternative email address(es) for DX alerts (comma separated)
     EmailAddressFrom: '',					// Sender email address
@@ -125,6 +130,10 @@ const AlertDistanceMax = configPlugin.AlertDistanceMax;
 const StationMode = configPlugin.StationMode;
 const StationModeCanLogServer = configPlugin.StationModeCanLogServer;
 
+const ScreenshotAlert = configPlugin.ScreenshotAlert || 'off';
+const ScreenshotWidth = configPlugin.ScreenshotWidth || 1920;
+const ScreenshotHeight = configPlugin.ScreenshotHeight || 1080;
+
 const EmailAlert = configPlugin.EmailAlert;
 const EmailAddressTo = configPlugin.EmailAddressTo;
 const EmailAddressFrom = configPlugin.EmailAddressFrom;
@@ -143,7 +152,6 @@ const TelegramChatId2 = configPlugin.TelegramChatId2;
 
 ////////////////////////////////////////////////////////////////
 
-const config = require('./../../config.json');
 const WebSocket = require('ws');
 
 const clientID = 'Server';
@@ -162,7 +170,14 @@ let message_link;
 const sentMessages = new Set();
 
 const { execSync } = require('child_process');
-const NewModules = ['nodemailer'];
+
+// Determine modules to install
+const NewModules = ['nodemailer', 'form-data', 'node-fetch'];
+
+// Only add puppeteer if screenshot feature is enabled
+if (ScreenshotAlert === 'on') {
+    NewModules.push('puppeteer');
+}
 
 // Check if blacklist is enabled and the blacklist.txt file exists
 const blacklistFilePath = path.join(__dirname, 'blacklist.txt');
@@ -172,21 +187,45 @@ if (configPlugin.EnableBacklist && fs.existsSync(blacklistFilePath)) {
 
 function checkAndInstallNewModules() {
     NewModules.forEach(module => {
-        const modulePath = path.join(__dirname, './../../node_modules', module);
-        if (!fs.existsSync(modulePath)) {
-            console.log(`Module ${module} is missing. Installing...`);
-            try {
-                execSync(`npm install ${module}`, { stdio: 'inherit' });
-                console.log(`Module ${module} installed successfully.`);
-            } catch (error) {
-                logError(`Error installing module ${module}:`, error);
-                process.exit(1);
+        // Handle puppeteer specifically as it might be required differently or already present in some environments
+        let checkName = module;
+        if(module === 'node-fetch') checkName = 'node-fetch'; // Just to be explicit
+
+        const modulePath = path.join(__dirname, './../../node_modules', checkName);
+        
+        // Simple check if module exists
+        try {
+             require.resolve(module);
+        } catch (e) {
+             if (!fs.existsSync(modulePath)) {
+                console.log(`Module ${module} is missing. Installing...`);
+                try {
+                    execSync(`npm install ${module}`, { stdio: 'inherit' });
+                    console.log(`Module ${module} installed successfully.`);
+                } catch (error) {
+                    logError(`Error installing module ${module}:`, error);
+                    // Do not exit process, try to continue
+                }
             }
         }
     });
 }
 
 checkAndInstallNewModules();
+
+// Require Puppeteer after check, only if enabled
+let puppeteer;
+if (ScreenshotAlert === 'on') {
+    try {
+        puppeteer = require('puppeteer');
+    } catch (e) {
+        logError("Puppeteer could not be loaded. Screenshot feature will be disabled.");
+    }
+}
+
+// Require FormData and Fetch for Telegram Photos
+const FormData = require('form-data');
+const fetch = require('node-fetch'); // Ensure node-fetch is used for Telegram uploads
 
 // Nodemailer configuration
 const nodemailer = require('nodemailer');
@@ -372,6 +411,75 @@ function getBlacklistMatchType(frequency, pi) {
     }
 }
 
+// Helper function to generate the screenshot filename
+function getScreenshotFilename(freq, picode, station, city, itu) {
+    const date = new Date();
+    // YYYYMMDD
+    const dateString = date.toISOString().slice(0, 10).replace(/-/g, ''); 
+    // HHMMSS
+    const timeString = date.toTimeString().slice(0, 8).replace(/:/g, ''); 
+
+    // Create an array with the parts
+    const parts = [dateString, timeString];
+
+    if (freq) parts.push(freq);
+    if (picode) parts.push(picode);
+
+    // Sanitize strings to be safe for filenames
+    const safeString = (str) => str ? str.replace(/[^a-zA-Z0-9\s-_]/g, '').trim() : '';
+
+    if (station) parts.push(safeString(station));
+    if (city) parts.push(safeString(city));
+    if (itu) parts.push(`[${itu}]`);
+
+    // Join with underscores and add extension
+    return parts.filter(Boolean).join('_') + '.png';
+}
+
+// Capture Screenshot Function
+async function captureScreenshot() {
+    if (ScreenshotAlert !== 'on' || !puppeteer) return null;
+
+    // Use 127.0.0.1 and the configured webserver port
+    const screenshotUrl = `http://127.0.0.1:${webserverPort}`;
+    
+    const delay = 0; 
+
+    try {
+        const browser = await puppeteer.launch({
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            headless: 'new'
+        });
+        const page = await browser.newPage();
+        
+        await page.setViewport({ width: ScreenshotWidth, height: ScreenshotHeight });
+        await page.goto(screenshotUrl, { waitUntil: 'networkidle2' });
+        
+        // Wait for the WebSocket connection to be established on the page
+        try {
+            await page.evaluate(async () => {
+                if (typeof window.socketPromise !== 'undefined') {
+                    await window.socketPromise;
+                }
+            });
+        } catch (e) {
+            logError("DX-Alert Warning: window.socketPromise not found or failed.", e);
+        }
+
+        if (delay > 0) {
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+
+        const screenshotBuffer = await page.screenshot({ encoding: 'binary', type: 'jpeg', quality: 80 });
+        await browser.close();
+        
+        return screenshotBuffer;
+    } catch (error) {
+        logError("DX-Alert Error capturing screenshot:", error);
+        return null;
+    }
+}
+
 // Handle incoming WebSocket messages
 let processingAlert = false;
 let firstAlert = true;
@@ -466,11 +574,24 @@ async function handleTextSocketMessage(event) {
                     }
                 }
 
+                // Capture screenshot if enabled
+                let screenshotBuffer = null;
+                let screenshotFilename = 'screenshot.jpg'; // default
+
+                if (ScreenshotAlert === 'on') {
+                    logInfo("DX-Alert: Capturing screenshot...");
+                    screenshotBuffer = await captureScreenshot();
+                    if (screenshotBuffer) {
+                        // Generate the descriptive filename based on current alert data
+                        screenshotFilename = getScreenshotFilename(frequency, picode, station, city, itu);
+                    }
+                }
+
                 if (EmailAlert === 'on') {
-                    sendEmail(subject, message_link);
+                    sendEmail(subject, message_link, null, screenshotBuffer, screenshotFilename);
                 }
                 if (TelegramAlert === 'on') {
-                    sendTelegram(subject, message_link);
+                    sendTelegram(subject, message_link, null, screenshotBuffer, screenshotFilename);
                 }
                 
                 // Restored: Log the reception event in the server log
@@ -500,7 +621,7 @@ function resetAlertStatus() {
 }
 
 // Function to send email using Nodemailer
-function sendEmail(subject, message, source) {
+function sendEmail(subject, message, source, screenshotBuffer = null, screenshotFilename = 'screenshot.jpg') {
     if (!ValidEmailAddressTo) {
         if (source) sendWebSocketNotification('error', subject, "No valid email recipients", source);
         return;
@@ -511,7 +632,15 @@ function sendEmail(subject, message, source) {
         to: ValidEmailAddressTo, // Supports "email1, email2"
         subject: subject,
         text: message,
+        attachments: []
     };
+
+    if (screenshotBuffer) {
+        mailOptions.attachments.push({
+            filename: screenshotFilename,
+            content: screenshotBuffer
+        });
+    }
 
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
@@ -535,34 +664,59 @@ function handleEmailResponse(subject, message, source) {
 }
 
 // Function to send message to Telegram
-function sendTelegram(subject, message, source) {
-    fetch('https://api.telegram.org/bot' + TelegramToken + '/sendMessage?chat_id=' + TelegramChatId + '&text=' + message)
-        .then(response => {
-            if (response.ok) {
-                handleTelegramResponse(subject, message, source);
-            } else {
-                return response.text().then(errorText => {
-                    sendWebSocketNotification('error', message, source);
-                    throw new Error('Failed to send Telegram message. Error: ' + errorText);
+async function sendTelegram(subject, message, source, screenshotBuffer = null, screenshotFilename = 'screenshot.jpg') {
+    const tokens = [];
+    if (TelegramToken && TelegramChatId) tokens.push({ token: TelegramToken, chat_id: TelegramChatId });
+    if (TelegramToken2 && TelegramChatId2) tokens.push({ token: TelegramToken2, chat_id: TelegramChatId2 });
+
+    for (const bot of tokens) {
+        try {
+            if (screenshotBuffer) {
+                // Send Photo with Caption
+                const formData = new FormData();
+                formData.append('chat_id', bot.chat_id);
+                formData.append('caption', message);
+                // Attach the file with the specific filename
+                formData.append('photo', screenshotBuffer, { filename: screenshotFilename });
+
+                const response = await fetch(`https://api.telegram.org/bot${bot.token}/sendPhoto`, {
+                    method: 'POST',
+                    body: formData
                 });
-            }
-        })
-        .catch(error => logError(error.message));
-		
-	if (TelegramToken2 !== '' && TelegramChatId2 !== '') {
-		 fetch('https://api.telegram.org/bot' + TelegramToken2 + '/sendMessage?chat_id=' + TelegramChatId2 + '&text=' + message)
-        .then(response => {
-            if (response.ok) {
-                handleTelegramResponse(subject, message, source);
+
+                if (response.ok) {
+                    handleTelegramResponse(subject, message, source);
+                } else {
+                    const errorText = await response.text();
+                    logError(`Failed to send Telegram photo. Error: ${errorText}`);
+                    // Fallback to text message
+                    await sendTelegramTextMessage(bot, subject, message, source);
+                }
+
             } else {
-                return response.text().then(errorText => {
-                    sendWebSocketNotification('error', message, source);
-                    throw new Error('Failed to send Telegram message. Error: ' + errorText);
-                });
+                // Send Text Message
+                await sendTelegramTextMessage(bot, subject, message, source);
             }
-        })
-        .catch(error => logError(error.message));
-	}
+        } catch (error) {
+            logError(`DX-Alert Telegram Error: ${error.message}`);
+            sendWebSocketNotification('error', message, source);
+        }
+    }
+}
+
+// Helper to send just text to Telegram
+async function sendTelegramTextMessage(bot, subject, message, source) {
+    try {
+        const response = await fetch(`https://api.telegram.org/bot${bot.token}/sendMessage?chat_id=${bot.chat_id}&text=${encodeURIComponent(message)}`);
+        if (response.ok) {
+            handleTelegramResponse(subject, message, source);
+        } else {
+            const errorText = await response.text();
+            throw new Error(`Failed to send Telegram message. Error: ${errorText}`);
+        }
+    } catch (error) {
+        throw error;
+    }
 }
 
 // Handle Telegram response
@@ -664,7 +818,7 @@ function handleWebSocketMessage(data, ws) {
 }
 
 // Handle DX-Alert specific WebSocket messages
-function handleDXAlertMessage(message, ws) {
+async function handleDXAlertMessage(message, ws) {
     const { status } = message.value;
 
     if (status === 'request') {
@@ -675,11 +829,27 @@ function handleDXAlertMessage(message, ws) {
 		}
 	} else if (status === 'test') {
 		logInfo(`${message.type} received "${status}" from ${message.source}`);
+        
+        // Capture screenshot for test if enabled
+        let screenshotBuffer = null;
+        let screenshotFilename = 'test_screenshot.jpg';
+
+        if (ScreenshotAlert === 'on') {
+            logInfo("DX-Alert: Capturing test screenshot...");
+            screenshotBuffer = await captureScreenshot();
+            if (screenshotBuffer) {
+                // Generate a generic timestamped filename for tests
+                const now = new Date();
+                const ts = now.toISOString().replace(/[-:.]/g, '').slice(0, 14); // YYYYMMDDHHMMSS
+                screenshotFilename = `screenshot_test_${ts}.png`;
+            }
+        }
+
 		if (EmailAlert === 'on') {
-			sendEmail(message.value.subject, message.value.message, message.source);
+			sendEmail(message.value.subject, message.value.message, message.source, screenshotBuffer, screenshotFilename);
 		}
 		if (TelegramAlert === 'on') {
-			sendTelegram(message.value.subject, `${ServerName} sent a Telegram test message!!! The current alert status is ${currentStatus}.`, message.source);
+			sendTelegram(message.value.subject, `${ServerName} sent a Telegram test message!!! The current alert status is ${currentStatus}.`, message.source, screenshotBuffer, screenshotFilename);
 		}	
 	} else if (status === 'on') {
 		logInfo(`${message.type} received "${status}" from ${message.source}`);

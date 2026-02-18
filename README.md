@@ -4,9 +4,9 @@ This plugin provides email notifications and Telegram Messages for DX reception 
 
 <img width="1261" height="800" alt="grafik" src="https://github.com/user-attachments/assets/29c6da18-d18f-43de-8deb-59184cbb4ce3" />
 
-## Version 3.6c (only works from web server version 1.3.5!!!)
+## Version 3.7 (The screenshot function requires version 3.9b or higher when using the scanner plugin!)
 
-- Multiple email addresses can be separated by commas; now being processed
+- Automatic screenshot creation and sending via email and/or Telegram integrated
 
 ## Installation notes:
 
@@ -33,7 +33,12 @@ The following variables can be changed in the DX-Alert.json:
     StationMode: 'off',             // Set it 'on' to enable alarm for every new logged TX Station (default: 'off')
     StationModeCanLogServer: '',    // OPTIONAL: Activates a central server to manage alarm repetitions (e.g. '127.0.0.1:2000', default is '') - only valid if StationMode: 'on' !
 	EnableBacklist: false,			// Set it to true if you use a blacklist.txt in the DX-Alert plugin folder 
-    
+	
+	//// Screenshot Options ////
+    ScreenshotAlert: 'off',			// Set it to "true" if you want to send a screenshot with the alarm notification (default is false)
+    ScreenshotWidth: 1280,			// Set the width of the screenshot here (default is 1280)
+    ScreenshotHeight: 900,			// Set the height of the screenshot here (default is 900)
+	
     //// Email Options ////
     EmailAlert: 'off', 			    // Enable email alert feature, 'on' or 'off'
     EmailAddressTo: '', 			// Alternative email address(es) for DX alerts, if the field remains empty, the email address of the web server will be used. Separate multiple email addresses with a comma. 
@@ -63,6 +68,7 @@ Please note:
 - In the Netherlands and Germany there are already existing Telegram DX Alert groups ("NL FM DX Alerts" und "DE FM DX Alerts") that you can join and publish your logs. You can get further information and the tokens from me.
 - If there are several web servers, it makes sense to register the alarms that have already been sent via a central server in order to avoid duplicate alarms. The [CanLogServer](https://github.com/Highpoint2000/canlog-server) can provide this functionality. When using the server, the log interval set in DX-Alert.json is inactive because the log interval set for the server has priority!
 - blacklist.txt must be created in the dx-alert plugin folder with only frequency or frequency;PI code combination eg. 87.700 or 87.700;D3C3. Multiple entries must be one below the other.
+- If you activate the screenshot function, the scanner will automatically slow down!
 
 ## Contact
 
@@ -72,6 +78,10 @@ If you have any questions, would like to report problems, or have suggestions fo
 
 <details>
 <summary>History</summary>
+
+### Version 3.7 (only works from web server version 1.3.5!!!)
+
+- Multiple email addresses can be separated by commas; now being processed
 
 ### Version 3.6b (only works from web server version 1.3.5!!!)
 
