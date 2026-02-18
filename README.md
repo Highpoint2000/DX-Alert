@@ -1,6 +1,6 @@
 # DX Alert Plugin for [FM-DX-Webserver](https://github.com/NoobishSVK/fm-dx-webserver)
 
-This plugin provides email notifications and Telegram Messages for DX reception with the FM-DX web server depending on a selected distance and frequency.
+This plugin provides email notifications and Telegram messages including screenshots for DX reception with the FM-DX web server, depending on the selected distance and frequency.
 
 <img width="1261" height="800" alt="grafik" src="https://github.com/user-attachments/assets/29c6da18-d18f-43de-8deb-59184cbb4ce3" />
 
