@@ -6,7 +6,7 @@ This plugin provides email notifications and Telegram messages including screens
 
 ## Version 3.7 (The screenshot function requires version 3.9b or higher when using the scanner plugin!)
 
-- Automatic screenshot creation and sending via email and/or Telegram integrated
+- Automatic screenshot creation and sending via email and/or Telegram integrated (activate in the settings and restart after!)
 
 ## Installation notes:
 
