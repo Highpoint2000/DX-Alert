@@ -6,7 +6,7 @@ This plugin provides email notifications and Telegram messages including screens
 
 ## Version 3.7a (Rollback version - Please also update the scanner to version 4.2b!)
 
--Automatic screenshot creation and email sending has been removed, and the configuration has been cleaned up.
+-Automatic screenshot creation has been removed, the configuration has been cleaned up
 
 Important note: Due to the diverse uses of the web server, especially the scanner, this function cannot currently be reliably implemented! 
 
